@@ -215,6 +215,8 @@ button {
 }
 
 .action-label {
+  display: inline-flex;
+  align-items: center;
   font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.14em;
