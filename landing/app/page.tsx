@@ -24,22 +24,30 @@ const INSTALL = [
   },
 ];
 
-async function getStars(): Promise<string | null> {
+async function getRepoData(): Promise<{ stars: string | null; version: string | null }> {
   try {
-    const res = await fetch("https://api.github.com/repos/pivoshenko/kasetto", {
-      next: { revalidate: 3600 },
-    });
-    if (!res.ok) return null;
-    const data = (await res.json()) as { stargazers_count: number };
-    const n = data.stargazers_count;
-    return n >= 1000 ? `${(n / 1000).toFixed(1)}K` : String(n);
+    const [repoRes, releaseRes] = await Promise.all([
+      fetch("https://api.github.com/repos/pivoshenko/kasetto", {
+        next: { revalidate: 3600 },
+      }),
+      fetch("https://api.github.com/repos/pivoshenko/kasetto/releases/latest", {
+        next: { revalidate: 3600 },
+      }),
+    ]);
+    const repo = repoRes.ok ? ((await repoRes.json()) as { stargazers_count: number }) : null;
+    const release = releaseRes.ok ? ((await releaseRes.json()) as { tag_name: string }) : null;
+    const n = repo?.stargazers_count ?? 0;
+    return {
+      stars: repo ? (n >= 1000 ? `${(n / 1000).toFixed(1)}K` : String(n)) : null,
+      version: release?.tag_name ?? null,
+    };
   } catch {
-    return null;
+    return { stars: null, version: null };
   }
 }
 
 export default async function Page() {
-  const stars = await getStars();
+  const { stars, version } = await getRepoData();
 
   return (
     <div className="page-wrap">
@@ -70,6 +78,7 @@ export default async function Page() {
           <div className="action-row">
             <span className="action-label">
               GITHUB
+              {version && <span className="version-badge">{version}</span>}
               {stars && (
                 <span className="accent-warm star-count">
                   <GoStar aria-hidden="true" />

@@ -227,6 +227,13 @@ button {
   color: var(--accent-warm);
 }
 
+.version-badge {
+  margin-left: 10px;
+  font-size: 11px;
+  color: var(--fg-subtle);
+  letter-spacing: 0.05em;
+}
+
 .star-count {
   display: inline-flex;
   align-items: center;
