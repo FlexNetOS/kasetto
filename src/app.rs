@@ -22,6 +22,7 @@ pub fn run() -> Result<()> {
                     plain: sync.plain,
                     verbose: sync.verbose,
                     yes: sync.yes,
+                    force: sync.force,
                     scope_override: sync.scope.scope_override(),
                     show_banner: true,
                 })
