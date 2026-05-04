@@ -32,10 +32,16 @@ const TEMPLATE: &str = r#"# Kasetto - https://github.com/pivoshenko/kasetto
 
 # mcps:
 #   - source: https://github.com/example/mcp-pack
-#   - source: https://github.com/example/mcp-pack
+#     mcps: "*"
+#   - source: https://github.com/example/monorepo
 #     ref: v1.0
-#   - source: https://github.com/example/repo
-#     path: .mcp.json         # explicit path to MCP JSON within the repo
+#     mcps:
+#       - github         # → mcps/github.json
+#       - linear         # → mcps/linear.json
+#   - source: https://github.com/example/other
+#     mcps:
+#       - name: my-server
+#         path: tools    # → tools/my-server.json
 "#;
 
 pub(crate) fn run(force: bool, global: bool) -> Result<()> {
