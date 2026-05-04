@@ -209,6 +209,7 @@ function renderTokens(tokens: Token[]) {
       );
     }
   }
+  if (lines[lines.length - 1].length === 0) lines.pop();
   return lines.map((line, i) => (
     <div key={i} className="sy-line">
       <span className="sy-ln">{i + 1}</span>
