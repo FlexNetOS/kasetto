@@ -63,6 +63,10 @@ export default async function Page() {
           {/* Tagline */}
           <div className="hero-row">
             <p className="hero-tagline">DECLARATIVE AI AGENT ENVIRONMENT MANAGER</p>
+            <p className="hero-etymology">
+              from <span className="hero-etymology-jp">カセット</span> — cassette. think of skill
+              sources as cassettes you plug in, swap out, and share across machines.
+            </p>
           </div>
 
           {/* GET STARTED */}

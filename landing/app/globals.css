@@ -197,6 +197,17 @@ button {
   line-height: 1.4;
 }
 
+.hero-etymology {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--fg-subtle);
+  letter-spacing: 0.02em;
+}
+
+.hero-etymology-jp {
+  color: var(--fg);
+}
+
 .hero-sub {
   font-size: 16px;
   letter-spacing: 0.22em;
