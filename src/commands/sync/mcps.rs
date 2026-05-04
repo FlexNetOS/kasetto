@@ -111,7 +111,7 @@ pub(super) fn sync_mcps(
                 skill: Some("mcp".into()),
                 status: "broken".into(),
                 error: Some(
-                    "no MCP JSON files found in source (expected .mcp.json, mcp.json, or mcp/*.json)"
+                    "no MCP JSON files found in source (expected .mcp.json, mcp.json, or mcps/*.json)"
                         .into(),
                 ),
             });

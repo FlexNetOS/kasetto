@@ -191,6 +191,14 @@ pub(crate) fn discover_mcps(root: &Path) -> Result<Vec<PathBuf>> {
         }
     }
 
+    // Warn if the old mcp/ layout is present but mcps/ is not.
+    if root.join("mcp").exists() && !root.join("mcps").exists() {
+        eprintln!(
+            "warning: found a `mcp/` directory but Kasetto now scans `mcps/` — \
+             rename it to suppress this warning"
+        );
+    }
+
     // Check mcps/ subdirectory for additional pack JSON files.
     let mcp_dir = root.join("mcps");
     if mcp_dir.exists() {
@@ -222,7 +230,7 @@ pub(crate) fn resolve_mcp_entry(root: &Path, entry: &crate::model::McpEntry) -> 
             (name.as_str(), path.as_deref().unwrap_or("mcps"))
         }
     };
-    let filename = if std::path::Path::new(name).extension().is_some() {
+    let filename = if name.ends_with(".json") {
         name.to_string()
     } else {
         format!("{name}.json")
