@@ -14,7 +14,7 @@
   A declarative AI agent environment manager, written in Rust.
 </p>
 
-Name comes from the Japanese word **カセット** (*kasetto*) - cassette. Think of skill and MCP sources as cassettes you plug in, swap out, and share across machines.
+Name comes from the Japanese word **カセット** (*kasetto*) - cassette. Think of skills and MCPs as cassettes you plug in, swap out, and share across machines.
 
 ## Why Kasetto
 
@@ -111,10 +111,10 @@ Generates a starter config file (`./kasetto.yaml` by default, or global config w
 kst init [--global] [--force]
 ```
 
-| Flag       | What it does                                                                           |
-| ---------- | -------------------------------------------------------------------------------------- |
-| `--global` | Write `$XDG_CONFIG_HOME/kasetto/kasetto.yaml` (or `~/.config/kasetto/kasetto.yaml`)    |
-| `--force`  | Overwrite an existing config file without asking                                       |
+| Flag       | What it does                                                                        |
+| ---------- | ----------------------------------------------------------------------------------- |
+| `--global` | Write `$XDG_CONFIG_HOME/kasetto/kasetto.yaml` (or `~/.config/kasetto/kasetto.yaml`) |
+| `--force`  | Overwrite an existing config file without asking                                    |
 
 ### `kst sync`
 
@@ -124,17 +124,17 @@ Reads the config, discovers skills, and makes the local destination match.
 kst sync [--config <path-or-url>] [--dry-run] [--quiet] [--json] [--plain] [--verbose] [--yes] [--project | --global]
 ```
 
-| Flag        | What it does                                                 |
-| ----------- | ------------------------------------------------------------ |
+| Flag        | What it does                                                                                                                                       |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `--config`  | Path or HTTPS URL to a YAML config (default order: `$KASETTO_CONFIG`, saved preference, `./kasetto.yaml`, `$XDG_CONFIG_HOME/kasetto/kasetto.yaml`) |
-| `--dry-run` | Preview what would change without writing anything           |
-| `--quiet`   | Suppress non-error output                                    |
-| `--json`    | Print the sync report as JSON                                |
-| `--plain`   | Disable colors and spinner animations                        |
-| `--verbose` | Show per-skill action details                                |
-| `--yes`     | Skip confirmation prompt for new MCP servers                 |
-| `--project` | Install into the current project directory                   |
-| `--global`  | Install globally (default)                                   |
+| `--dry-run` | Preview what would change without writing anything                                                                                                 |
+| `--quiet`   | Suppress non-error output                                                                                                                          |
+| `--json`    | Print the sync report as JSON                                                                                                                      |
+| `--plain`   | Disable colors and spinner animations                                                                                                              |
+| `--verbose` | Show per-skill action details                                                                                                                      |
+| `--yes`     | Skip confirmation prompt for new MCP servers                                                                                                       |
+| `--project` | Install into the current project directory                                                                                                         |
+| `--global`  | Install globally (default)                                                                                                                         |
 
 Missing skills are reported as broken but won't stop the rest of the run. The exit code is non-zero only for source-level failures.
 
@@ -262,22 +262,22 @@ mcps:
       - linear        # → mcps/linear.json
 ```
 
-| Key                  | Required | Description                                                         |
-| -------------------- | -------- | ------------------------------------------------------------------- |
-| `agent`              | no       | One or more [supported agent presets](#supported-agents)            |
-| `destination`        | no       | Explicit install path - overrides `agent` if both are set           |
-| `scope`              | no       | `"global"` (default) or `"project"` - where to install              |
-| `skills`             | **yes**  | List of skill sources                                               |
-| `skills[].source`    | **yes**  | Git host URL or local path                                          |
-| `skills[].branch`    | no       | Branch for remote sources (default: `main`, falls back to `master`) |
-| `skills[].ref`       | no       | Git tag, commit SHA, or ref (takes priority over `branch`)          |
-| `skills[].sub-dir`   | no       | Relative subdirectory to use as source root (`sub_dir` alias also supported) |
-| `skills[].skills`    | **yes**  | `"*"` for all, or a list of names / `{ name, path }` objects        |
-| `mcps`               | no       | List of MCP server sources                                          |
-| `mcps[].source`      | **yes**  | Git host URL or local path containing MCP config                    |
-| `mcps[].branch`      | no       | Branch for remote sources                                           |
-| `mcps[].ref`         | no       | Git tag, commit SHA, or ref                                         |
-| `mcps[].mcps`        | **yes**  | `"*"` to discover all, or a list of names / `{ name, path }` objects |
+| Key                | Required | Description                                                                  |
+| ------------------ | -------- | ---------------------------------------------------------------------------- |
+| `agent`            | no       | One or more [supported agent presets](#supported-agents)                     |
+| `destination`      | no       | Explicit install path - overrides `agent` if both are set                    |
+| `scope`            | no       | `"global"` (default) or `"project"` - where to install                       |
+| `skills`           | **yes**  | List of skill sources                                                        |
+| `skills[].source`  | **yes**  | Git host URL or local path                                                   |
+| `skills[].branch`  | no       | Branch for remote sources (default: `main`, falls back to `master`)          |
+| `skills[].ref`     | no       | Git tag, commit SHA, or ref (takes priority over `branch`)                   |
+| `skills[].sub-dir` | no       | Relative subdirectory to use as source root (`sub_dir` alias also supported) |
+| `skills[].skills`  | **yes**  | `"*"` for all, or a list of names / `{ name, path }` objects                 |
+| `mcps`             | no       | List of MCP server sources                                                   |
+| `mcps[].source`    | **yes**  | Git host URL or local path containing MCP config                             |
+| `mcps[].branch`    | no       | Branch for remote sources                                                    |
+| `mcps[].ref`       | no       | Git tag, commit SHA, or ref                                                  |
+| `mcps[].mcps`      | **yes**  | `"*"` to discover all, or a list of names / `{ name, path }` objects         |
 
 ## Supported Agents
 
@@ -320,12 +320,12 @@ Don't see your agent? Use the `destination` field to point at any path.
 
 Set an environment variable and private sources just work — no login command, no credentials file:
 
-| Host                        | Environment variable                                |
-| --------------------------- | --------------------------------------------------- |
-| GitHub / GitHub Enterprise  | `GITHUB_TOKEN` or `GH_TOKEN`                        |
-| GitLab / GitLab self-hosted | `GITLAB_TOKEN` or `CI_JOB_TOKEN`                    |
+| Host                        | Environment variable                                                                       |
+| --------------------------- | ------------------------------------------------------------------------------------------ |
+| GitHub / GitHub Enterprise  | `GITHUB_TOKEN` or `GH_TOKEN`                                                               |
+| GitLab / GitLab self-hosted | `GITLAB_TOKEN` or `CI_JOB_TOKEN`                                                           |
 | Bitbucket Cloud             | `BITBUCKET_EMAIL` + `BITBUCKET_TOKEN` (or `BITBUCKET_USERNAME` + `BITBUCKET_APP_PASSWORD`) |
-| Codeberg / Gitea / Forgejo  | `GITEA_TOKEN`, `CODEBERG_TOKEN`, or `FORGEJO_TOKEN` |
+| Codeberg / Gitea / Forgejo  | `GITEA_TOKEN`, `CODEBERG_TOKEN`, or `FORGEJO_TOKEN`                                        |
 
 Kasetto auto-detects GitHub Enterprise for any hostname with an `owner/repo` path, and GitLab self-hosted when the hostname starts with `gitlab.`.
 
