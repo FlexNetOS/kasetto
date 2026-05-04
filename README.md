@@ -94,6 +94,8 @@ kst sync --config kasetto.yaml
 
 That's it. Kasetto pulls the skills and installs them into the right agent directory. The next time you run `sync`, only what changed gets updated.
 
+See [pivoshenko/pivoshenko.ai](https://github.com/pivoshenko/pivoshenko.ai) for a community example pulling skills from multiple packs for Claude Code and OpenCode.
+
 **2. See what's installed:**
 
 ```bash
