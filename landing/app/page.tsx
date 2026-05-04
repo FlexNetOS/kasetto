@@ -64,7 +64,8 @@ export default async function Page() {
           <div className="hero-row">
             <p className="hero-tagline">DECLARATIVE AI AGENT ENVIRONMENT MANAGER</p>
             <p className="hero-etymology">
-              <span className="hero-etymology-jp">カセット</span> — cassette. plug in, swap out, share.
+              <span className="hero-etymology-jp">カセット</span> — cassette. plug in, swap out,
+              share.
             </p>
           </div>
 
