@@ -135,16 +135,15 @@ pub(super) fn sync_mcps(
                 desired_mcp_ids.insert(asset_id.clone());
 
                 let existing = lock.get_tracked_asset("mcp", &asset_id);
-                let is_unchanged = !ctx.force
-                    && existing
-                        .as_ref()
-                        .map(|(h, _)| {
-                            h == &hash
-                                && mcp_settings_list
-                                    .iter()
-                                    .all(|target| servers_present_in_settings(&server_names, target))
-                        })
-                        .unwrap_or(false);
+                let is_unchanged = existing
+                    .as_ref()
+                    .map(|(h, _)| {
+                        h == &hash
+                            && mcp_settings_list
+                                .iter()
+                                .all(|target| servers_present_in_settings(&server_names, target))
+                    })
+                    .unwrap_or(false);
 
                 if is_unchanged {
                     let label = sync_label("MCP", &file_name, &src.source, ctx.plain);

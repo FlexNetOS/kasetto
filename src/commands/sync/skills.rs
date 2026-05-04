@@ -107,12 +107,11 @@ fn process_single_skill(
         let hash = hash_dir(skill_path)?;
         let dest = destination.join(skill_name);
 
-        let is_unchanged = !ctx.force
-            && state
-                .skills
-                .get(&key)
-                .map(|prev| prev.hash == hash && dest.exists())
-                .unwrap_or(false);
+        let is_unchanged = state
+            .skills
+            .get(&key)
+            .map(|prev| prev.hash == hash && dest.exists())
+            .unwrap_or(false);
 
         if is_unchanged {
             if !ctx.dry_run {
