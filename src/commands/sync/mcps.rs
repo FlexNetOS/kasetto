@@ -137,15 +137,16 @@ pub(super) fn sync_mcps(
                 desired_mcp_ids.insert(asset_id.clone());
 
                 let existing = lock.get_tracked_asset("mcp", &asset_id);
-                let is_unchanged = existing
-                    .as_ref()
-                    .map(|(h, _)| {
-                        h == &hash
-                            && mcp_settings_list
-                                .iter()
-                                .all(|target| servers_present_in_settings(&server_names, target))
-                    })
-                    .unwrap_or(false);
+                let is_unchanged = !ctx.force
+                    && existing
+                        .as_ref()
+                        .map(|(h, _)| {
+                            h == &hash
+                                && mcp_settings_list
+                                    .iter()
+                                    .all(|target| servers_present_in_settings(&server_names, target))
+                        })
+                        .unwrap_or(false);
 
                 if is_unchanged {
                     let label = sync_label("MCP", &file_name, &src.source, ctx.plain);
@@ -202,6 +203,26 @@ pub(super) fn sync_mcps(
                 // User declined — mark new installs as skipped, still apply updates
                 for p in &pending {
                     if p.is_new {
+                        if !ctx.as_json && !ctx.quiet {
+                            let label = sync_label("MCP", &p.file_name, &p.source, ctx.plain);
+                            with_spinner(ctx.animate, ctx.plain, &label, || {
+                                Ok::<(), crate::error::Error>(())
+                            })?;
+                            if ctx.plain {
+                                eprintln!("~ Skipped MCP {} (declined)", p.file_name);
+                            } else {
+                                use crate::colors::{SECONDARY, WARNING};
+                                eprintln!(
+                                    "{WARNING}~{RESET} Skipped {ACCENT}{}{RESET} {SECONDARY}(declined — re-run with --yes to install){RESET}",
+                                    p.file_name,
+                                    WARNING = WARNING,
+                                    RESET = crate::colors::RESET,
+                                    ACCENT = ACCENT,
+                                    SECONDARY = SECONDARY,
+                                );
+                            }
+                        }
+                        summary.skipped += 1;
                         actions.push(Action {
                             source: Some(p.source.clone()),
                             skill: Some(format!("mcp:{}", p.file_name)),

@@ -19,6 +19,7 @@ pub(super) struct SyncContext<'a> {
     pub(super) scope: Scope,
     pub(super) dry_run: bool,
     pub(super) yes: bool,
+    pub(super) force: bool,
     pub(super) animate: bool,
     pub(super) plain: bool,
     pub(super) as_json: bool,
@@ -34,6 +35,7 @@ pub(crate) struct SyncOptions<'a> {
     pub plain: bool,
     pub verbose: bool,
     pub yes: bool,
+    pub force: bool,
     pub scope_override: Option<Scope>,
     pub show_banner: bool,
 }
@@ -65,6 +67,7 @@ pub(crate) fn run(opts: &SyncOptions) -> Result<()> {
         scope,
         dry_run: opts.dry_run,
         yes: opts.yes,
+        force: opts.force,
         animate,
         plain: opts.plain,
         as_json: opts.as_json,
@@ -171,6 +174,29 @@ fn print_sync_summary(report: &Report, plain: bool, verbose: bool) {
             " ".repeat(W3.saturating_sub("Failed".len())),
             report.summary.failed,
         );
+    }
+
+    if report.summary.skipped > 0 {
+        if plain {
+            println!(
+                "  {:<L1$} {:>NW$}",
+                "Skipped:",
+                report.summary.skipped,
+            );
+            println!("  Hint: re-run with --yes to install skipped MCP servers");
+        } else {
+            println!(
+                "\n  {}Skipped{}{}: {:>NW$}   {}(re-run with {}--yes{} to install){}",
+                WARNING,
+                RESET,
+                " ".repeat(L1.saturating_sub("Skipped".len())),
+                report.summary.skipped,
+                SECONDARY,
+                ACCENT,
+                SECONDARY,
+                RESET,
+            );
+        }
     }
 
     if verbose {
