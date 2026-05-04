@@ -83,13 +83,13 @@ mcps:
 
 ### Skill Source Fields
 
-| Key       | Required | Description                                                            |
-| --------- | -------- | ---------------------------------------------------------------------- |
-| `source`  | **yes**  | Git host URL or local path (GitHub, GitLab, Bitbucket, Codeberg/Gitea) |
-| `branch`  | no       | Branch for remote sources (default: `main`, falls back to `master`)    |
-| `ref`     | no       | Git tag, commit SHA, or ref - takes priority over `branch`             |
+| Key       | Required | Description                                                                                    |
+| --------- | -------- | ---------------------------------------------------------------------------------------------- |
+| `source`  | **yes**  | Git host URL or local path (GitHub, GitLab, Bitbucket, Codeberg/Gitea)                         |
+| `branch`  | no       | Branch for remote sources (default: `main`, falls back to `master`)                            |
+| `ref`     | no       | Git tag, commit SHA, or ref - takes priority over `branch`                                     |
 | `sub-dir` | no       | Relative subdirectory within the source used as the discovery root (`sub_dir` alias supported) |
-| `skills`  | **yes**  | `"*"` for all, or a list of names / `{ name, path }` objects           |
+| `skills`  | **yes**  | `"*"` for all, or a list of names / `{ name, path }` objects                                   |
 
 ### Skill Entry Fields
 
@@ -102,12 +102,12 @@ Each entry in the `skills` list can be a string (the skill name) or an object:
 
 ### MCP Source Fields
 
-| Key      | Required | Description                                                                   |
-| -------- | -------- | ----------------------------------------------------------------------------- |
-| `source` | **yes**  | Git host URL or local path containing MCP server config                       |
-| `branch` | no       | Branch for remote sources (default: `main`, falls back to `master`)           |
-| `ref`    | no       | Git tag, commit SHA, or ref - takes priority over `branch`                    |
-| `mcps`   | **yes**  | `"*"` to discover all, or a list of names / `{ name, path }` objects           |
+| Key      | Required | Description                                                          |
+| -------- | -------- | -------------------------------------------------------------------- |
+| `source` | **yes**  | Git host URL or local path containing MCP server config              |
+| `branch` | no       | Branch for remote sources (default: `main`, falls back to `master`)  |
+| `ref`    | no       | Git tag, commit SHA, or ref - takes priority over `branch`           |
+| `mcps`   | **yes**  | `"*"` to discover all, or a list of names / `{ name, path }` objects |
 
 When `mcps: "*"`, Kasetto auto-discovers MCP config files in this order:
 
@@ -119,12 +119,12 @@ When `mcps: "*"`, Kasetto auto-discovers MCP config files in this order:
 
 Each entry in the `mcps` list can be a plain string (name) or an object — mirrors skill entries:
 
-| Form                        | Resolves to                  |
-| --------------------------- | ---------------------------- |
-| `- github`                  | `mcps/github.json`           |
-| `- github.json`             | `mcps/github.json`           |
-| `- { name: x, path: dir }`  | `dir/x.json`                 |
-| `- { name: x }`             | `mcps/x.json`                |
+| Form                       | Resolves to        |
+| -------------------------- | ------------------ |
+| `- github`                 | `mcps/github.json` |
+| `- github.json`            | `mcps/github.json` |
+| `- { name: x, path: dir }` | `dir/x.json`       |
+| `- { name: x }`            | `mcps/x.json`      |
 
 `.json` is appended automatically when the name has no extension.
 
@@ -142,6 +142,14 @@ kst sync --config https://example.com/team-skills.yaml
 ```
 
 Great for sharing a single config across a team without checking it into every repository.
+
+### Real-world example
+
+[pivoshenko/pivoshenko.ai](https://github.com/pivoshenko/pivoshenko.ai) is a public config that pulls skills from several community packs for Claude Code and OpenCode:
+
+```bash
+kst sync --config https://github.com/pivoshenko/pivoshenko.ai/blob/main/kasetto.yaml
+```
 
 Kasetto recognises browser URLs from GitHub, GitLab, and Gitea / Codeberg / Forgejo, and auto-rewrites them to the matching raw-content endpoint. You can paste any of these directly:
 
