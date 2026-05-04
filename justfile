@@ -17,8 +17,16 @@ lint: lint-rs lint-next
 test:
   cargo test
 
-update:
+update-rs:
   cargo update
+
+update-next:
+  cd landing && pnpm update
+
+update-docs:
+  uv pip compile docs/requirements.txt -o docs/requirements.txt
+
+update: update-rs update-next
 
 build-rs:
   cargo build --release
