@@ -13,11 +13,13 @@ function resolveTheme(): Theme {
 
 export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>("dark");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const initial = resolveTheme();
     setTheme(initial);
     document.documentElement.setAttribute("data-theme", initial);
+    setMounted(true);
   }, []);
 
   function toggle() {
@@ -26,6 +28,8 @@ export function ThemeToggle() {
     document.documentElement.setAttribute("data-theme", next);
     localStorage.setItem("theme", next);
   }
+
+  if (!mounted) return <button className="footer-icon" aria-label="Toggle theme" />;
 
   return (
     <button onClick={toggle} className="footer-icon" aria-label="Toggle theme">
