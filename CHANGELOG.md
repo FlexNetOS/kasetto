@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.6.1] - 2026-05-07
+
+### Bug fixes
+
+- **sync**: Resolve skill path relative to source root
+- **docs**: Fix uv venv build command for Vercel
+- **docs**: Pin Python 3.12 for Vercel build
+
+### Documentation
+
+- Add real-world config example link
+
 ## [2.6.0] - 2026-05-04
 
 ### Bug fixes
@@ -39,6 +51,10 @@ All notable changes to this project will be documented in this file.
 ### Build
 
 - Update dev dependencies
+
+### Release
+
+- V2.6.0
 
 ### Style
 
