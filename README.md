@@ -344,14 +344,6 @@ skills:
 
 The same tokens apply when you fetch a remote config via `--config https://...`.
 
-## Roadmap
-
-- Agents management
-- Hooks management
-- Audit command — scan config and MCP servers for security issues
-- Smart URL rewriting — auto-rewrite GitHub `/blob/` URLs to raw content
-- Your idea? [Open an issue](https://github.com/pivoshenko/kasetto/issues)
-
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
