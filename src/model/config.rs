@@ -50,10 +50,8 @@ pub(crate) fn resolve_scope(cli_override: Option<Scope>, cfg: Option<&Config>) -
     if let Some(cfg) = cfg {
         return cfg.resolved_scope();
     }
-    if let Ok(text) = std::fs::read_to_string(crate::default_config_path()) {
-        if let Ok(cfg) = serde_yaml::from_str::<Config>(&text) {
-            return cfg.resolved_scope();
-        }
+    if let Ok((cfg, _, _)) = crate::fsops::load_config_any(&crate::default_config_path()) {
+        return cfg.resolved_scope();
     }
     Scope::Global
 }

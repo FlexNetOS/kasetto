@@ -17,6 +17,31 @@ kst sync --config https://example.com/team/kasetto.yaml
 
 For private configs hosted on git providers, set the matching token env var (see [Authentication](./authentication.md)).
 
+## Inheriting From A Team Or Org Base
+
+Use `extends` to compose configs. A common pattern: an org-wide base, a team overlay, and a per-project file that narrows or pins specific entries.
+
+```yaml
+# project/kasetto.yaml
+extends:
+  - https://github.com/acme/skills-base/raw/main/kasetto.yaml
+  - https://example.com/team/overlay.yaml
+
+scope: project
+
+skills:
+  # Same source as the base → narrows the parent's skills list to one entry.
+  - source: https://github.com/anthropics/skills
+    skills:
+      - skill-creator
+
+  # New source → appended on top of the inherited list.
+  - source: https://github.com/acme/internal-pack
+    skills: "*"
+```
+
+Top-level scalars (`scope`, `agent`, `destination`) replace. `skills` and `mcps` merge by `(source, ref-or-branch, sub-dir)` identity. See [Configuration → Extending Another Config](./configuration.md#extending-another-config) for the full merge-rules table.
+
 ## Monorepo: Project Scope Per Workspace
 
 Keep one `kasetto.yaml` per workspace folder and make it project-scoped:

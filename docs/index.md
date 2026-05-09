@@ -87,6 +87,8 @@ kst sync --config https://example.com/team-skills.yaml
 
 For private configs hosted on git providers, set the right env var token first (see [Authentication](./authentication.md#remote-configs)).
 
+You can also inherit from another config with `extends:`. A child config can pull in everything from a team base and override or extend it — see [Extending Another Config](./configuration.md#extending-another-config).
+
 ## Previewing Changes
 
 Not ready to commit? Use `--dry-run` to see what would happen first:
