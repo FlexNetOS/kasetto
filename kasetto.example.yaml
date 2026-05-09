@@ -1,11 +1,52 @@
 # Option A: preset destination by agent (see README for supported agent values)
-agent: codex
+agent:
+  - codex
+  - claude-code
 
 # Option B: manual destination (takes precedence if both are set)
 # destination: ./.agents/skills
 
 skills:
-  - source: https://github.com/pivoshenko/pivoshenko.ai
+  - source: https://github.com/anthropics/skills
     skills:
-      - name: pivoshenko-brand-guidelines
-      - name: skill-creator
+      - doc-coauthoring
+      - frontend-design
+      - pdf
+      - pptx
+      - skill-creator
+
+  - source: https://github.com/ferdinandobons/startup-skill
+    skills:
+      - startup-design
+      - startup-competitors
+      - startup-positioning
+      - startup-pitch
+
+  - source: https://github.com/vercel-labs/next-skills
+    skills: "*"
+
+  - source: https://github.com/vercel-labs/agent-skills
+    skills:
+      - web-design-guidelines
+      - deploy-to-vercel
+
+  - source: https://github.com/shepsci/kaggle-skill
+    skills: "*"
+
+  - source: https://github.com/apollographql/skills
+    skills:
+      - rust-best-practices
+
+  - source: https://github.com/mattpocock/skills
+    skills:
+      - name: grill-me
+        path: skills/productivity
+      - name: caveman
+        path: skills/productivity
+
+mcps:
+  - source: https://github.com/pivoshenko/pivoshenko.ai
+    mcps:
+      - github
+      - vercel
+      - kaggle
