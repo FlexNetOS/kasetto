@@ -1,7 +1,7 @@
 const FEATURES = [
   {
     title: "DECLARATIVE",
-    desc: "One YAML file replaces every manual setup script you have ever written. Define your skills, MCP servers, and agents once — then forget about them. Your config becomes the single source of truth across every machine and every teammate.",
+    desc: "One YAML file replaces every manual setup script you have ever written. Define your skills, MCP servers, and agents once — then forget about them. Configs compose with `extends`, so an org base, a team overlay, and a per-project file stay in sync without copy-paste.",
   },
   {
     title: "ENTERPRISE & PRIVATE REPOS",
@@ -28,6 +28,14 @@ const FEATURES = [
 type Token = { t: string; v?: string };
 
 const CONFIG_LINES: Token[] = [
+  { t: "cmt", v: "# inherit a shared base config — overrides merge on top" },
+  { t: "nl" },
+  { t: "key", v: "extends" },
+  { t: "punct", v: ": " },
+  { t: "url", v: "github.com/acme/kasetto-base/raw/main/kasetto.yaml" },
+  { t: "nl" },
+  { t: "nl" },
+
   { t: "key", v: "agent" },
   { t: "punct", v: ":" },
   { t: "nl" },

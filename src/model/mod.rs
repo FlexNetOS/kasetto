@@ -1,5 +1,6 @@
 mod agent;
 mod config;
+pub(crate) mod extend;
 mod types;
 
 use std::path::PathBuf;

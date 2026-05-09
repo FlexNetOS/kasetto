@@ -279,6 +279,32 @@ mcps:
 | `mcps[].branch`    | no       | Branch for remote sources                                                    |
 | `mcps[].ref`       | no       | Git tag, commit SHA, or ref                                                  |
 | `mcps[].mcps`      | **yes**  | `"*"` to discover all, or a list of names / `{ name, path }` objects         |
+| `extends`          | no       | Path or URL of a parent config to inherit from (string or list)              |
+
+### Extending another config
+
+Use `extends` to inherit from a shared base config. Local relative paths resolve against the extending file; HTTPS URLs use the same auth env vars as `--config`.
+
+```yaml
+# child.yaml — pulls everything from the team base, then overrides
+extends: ./team-base.yaml
+scope: project
+skills:
+  - source: https://github.com/example/extra-pack
+    skills: "*"
+```
+
+Scalars (`destination`, `scope`, `agent`) replace. `skills` and `mcps` merge by `(source, ref-or-branch, sub-dir)` identity — same identity replaces, otherwise appends. So a child can narrow a parent's `skills: "*"` to a specific list, pin a different `ref`, or simply add new sources. Cycles are rejected; max chain depth is 8.
+
+`extends` accepts a list too — parents merge left-to-right, then the child overrides them all:
+
+```yaml
+extends:
+  - ./org-base.yaml
+  - https://example.com/team-overlay.yaml
+```
+
+See [docs/configuration.md](docs/configuration.md#extending-another-config) for the full merge-rules reference.
 
 ## Supported Agents
 

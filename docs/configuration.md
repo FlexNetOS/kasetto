@@ -80,6 +80,7 @@ mcps:
 | `scope`       | no       | `"global"` (default) or `"project"` - where to install              |
 | `skills`      | **yes**  | List of skill sources                                               |
 | `mcps`        | no       | List of MCP server sources                                          |
+| `extends`     | no       | Path or URL of a parent config to inherit from (string or list)     |
 
 ### Skill Source Fields
 
@@ -140,6 +141,41 @@ Paths are resolved relative to the source root (or `sub-dir` if set); absolute p
 MCP config files must contain a `mcpServers` object with server definitions. Servers are merged
 into each agent's native settings file (e.g., `.claude.json` for Claude Code, `.cursor/mcp.json`
 for Cursor). See [how sync works](./how-sync-works.md) for merge behavior details.
+
+## Extending Another Config
+
+Use `extends` to inherit from a parent config. Local relative paths resolve against the extending file's directory; HTTPS URLs are fetched with the same auth env vars as `--config`.
+
+```yaml
+# child.yaml
+extends: ./team-base.yaml
+scope: project
+skills:
+  - source: https://github.com/example/extra-pack
+    skills: "*"
+```
+
+`extends` accepts a single string or a list. With a list, parents merge left-to-right; the child overrides them all.
+
+```yaml
+extends:
+  - ./org-base.yaml
+  - https://example.com/team-overlay.yaml
+```
+
+### Merge rules
+
+| Field         | Rule                                                                                                                          |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `destination` | Replace - child wins                                                                                                          |
+| `scope`       | Replace - child wins                                                                                                          |
+| `agent`       | Replace - child wins                                                                                                          |
+| `skills`      | Merge by `(source, ref-or-branch, sub-dir)` identity. Same identity replaces; new entries append.                             |
+| `mcps`        | Same as `skills` (`sub-dir` is always empty for MCP sources, so identity is `(source, ref-or-branch)`).                       |
+
+Identity-based merging lets a child *narrow* a parent's `skills: "*"` to a specific list, or pin a different `ref`, while still adding new sources.
+
+Cycles are detected and rejected. Maximum chain depth is 8.
 
 ## Remote Configs
 
