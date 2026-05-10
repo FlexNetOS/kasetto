@@ -18,6 +18,16 @@ struct DoctorOutput {
     last_sync: Option<String>,
     failures: Vec<SyncFailure>,
     mcps: Vec<String>,
+    update_check: UpdateCheckOutput,
+}
+
+#[derive(serde::Serialize)]
+struct UpdateCheckOutput {
+    /// "up_to_date" | "update_available" | "unknown" (no cache yet)
+    status: String,
+    latest_version: Option<String>,
+    checked_at: Option<u64>,
+    age_seconds: Option<u64>,
 }
 
 pub(crate) fn run(
@@ -71,6 +81,8 @@ pub(crate) fn run(
         Scope::Project => "project".to_string(),
     };
 
+    let update_check = build_update_check(&version);
+
     let output = DoctorOutput {
         version,
         lock_file: lock_file_path.to_string_lossy().to_string(),
@@ -80,6 +92,7 @@ pub(crate) fn run(
         last_sync,
         failures,
         mcps: managed_mcps,
+        update_check,
     };
 
     if as_json {
@@ -106,6 +119,11 @@ pub(crate) fn run(
     print_field("Scope", &output.scope, color);
     print_field("Installation Path", &output.installation_path, color);
     print_field("Last Sync", &last_sync_text, color);
+    print_field(
+        "Update Check",
+        &format_update_check(&output.update_check),
+        color,
+    );
 
     print_label("Failures", color);
     if output.failures.is_empty() {
@@ -135,4 +153,51 @@ pub(crate) fn run(
     );
 
     Ok(())
+}
+
+fn build_update_check(current_version: &str) -> UpdateCheckOutput {
+    let Some(entry) = crate::update_notifier::read_cached_entry() else {
+        return UpdateCheckOutput {
+            status: "unknown".to_string(),
+            latest_version: None,
+            checked_at: None,
+            age_seconds: None,
+        };
+    };
+    let age = crate::update_notifier::now_unix_secs().saturating_sub(entry.checked_at);
+    let status = if crate::commands::self_update::is_newer(current_version, &entry.latest_version) {
+        "update_available"
+    } else {
+        "up_to_date"
+    };
+    UpdateCheckOutput {
+        status: status.to_string(),
+        latest_version: Some(entry.latest_version),
+        checked_at: Some(entry.checked_at),
+        age_seconds: Some(age),
+    }
+}
+
+fn format_update_check(uc: &UpdateCheckOutput) -> String {
+    let age_label = uc.age_seconds.map(format_age).unwrap_or_default();
+    match uc.status.as_str() {
+        "update_available" => format!(
+            "{} available (checked {age_label})",
+            uc.latest_version.as_deref().unwrap_or("?"),
+        ),
+        "up_to_date" => format!("up-to-date (checked {age_label})"),
+        _ => "not yet checked".to_string(),
+    }
+}
+
+fn format_age(secs: u64) -> String {
+    if secs < 60 {
+        format!("{secs}s ago")
+    } else if secs < 3600 {
+        format!("{}m ago", secs / 60)
+    } else if secs < 86_400 {
+        format!("{}h ago", secs / 3600)
+    } else {
+        format!("{}d ago", secs / 86_400)
+    }
 }

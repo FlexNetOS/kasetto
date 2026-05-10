@@ -182,6 +182,8 @@ Checks GitHub for the latest release, verifies the SHA256 checksum against `chec
 kst self update [--json]
 ```
 
+Kasetto also prints a one-line yellow notice at the end of any command when a newer release is available. The check runs in the background at most once every 24 hours, caches the result under `$XDG_CACHE_HOME/kasetto/update-check.json`, and is suppressed under `--json` / `--plain` / `--quiet` and when stdout is not a TTY.
+
 ### `kst self uninstall`
 
 Removes installed skills, MCP configs, Kasetto data, and the binary.

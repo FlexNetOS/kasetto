@@ -191,6 +191,7 @@ mod profile;
 mod source;
 mod tui;
 mod ui;
+mod update_notifier;
 
 pub use app::run;
 pub use error::Result;
