@@ -4,6 +4,7 @@ import { AgentsGrid } from "./components/agents-grid";
 import { CopyButton } from "./components/copy-button";
 import { ConfigExample, FeatureList } from "./components/feature-tabs";
 import { HeroTerminal } from "./components/hero-terminal";
+import { ScrollCue } from "./components/scroll-cue";
 
 const INSTALL = [
   {
@@ -91,7 +92,7 @@ export default async function Page() {
 
       <div className="cassette-label">
         <h1 className="hero-headline">
-          Declarative <span className="hero-accent">AI agent</span> <br />
+          <span className="hero-accent">Declarative</span> AI agent <br />
           environment manager.
         </h1>
         <p className="hero-etymology">
@@ -113,6 +114,8 @@ export default async function Page() {
 
         <HeroTerminal />
       </div>
+
+      <ScrollCue />
 
       {/* ─────── SIDE A ─────── */}
       <SideBanner side="A" label="GET STARTED · FEATURES · EXAMPLE" />
