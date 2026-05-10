@@ -10,18 +10,18 @@ use crate::fsops::http_client;
 use crate::profile::list_color_enabled;
 use crate::ui::{animations_enabled, print_json, with_spinner, SYM_OK};
 
-const GITHUB_REPO: &str = "pivoshenko/kasetto";
+pub(crate) const GITHUB_REPO: &str = "pivoshenko/kasetto";
 
 #[derive(serde::Deserialize)]
-struct Release {
-    tag_name: String,
-    assets: Vec<Asset>,
+pub(crate) struct Release {
+    pub(crate) tag_name: String,
+    pub(crate) assets: Vec<Asset>,
 }
 
 #[derive(serde::Deserialize)]
-struct Asset {
-    name: String,
-    browser_download_url: String,
+pub(crate) struct Asset {
+    pub(crate) name: String,
+    pub(crate) browser_download_url: String,
 }
 
 #[derive(serde::Serialize)]
@@ -112,7 +112,7 @@ pub(crate) fn run(as_json: bool) -> Result<()> {
     Ok(())
 }
 
-fn fetch_latest_release() -> Result<Release> {
+pub(crate) fn fetch_latest_release() -> Result<Release> {
     let url = format!("https://api.github.com/repos/{GITHUB_REPO}/releases/latest");
     let text = http_client()?
         .get(&url)
@@ -140,7 +140,7 @@ fn current_target() -> String {
     }
 }
 
-fn is_newer(current: &str, latest: &str) -> bool {
+pub(crate) fn is_newer(current: &str, latest: &str) -> bool {
     let parse = |v: &str| -> (u64, u64, u64) {
         let parts: Vec<u64> = v.split('.').filter_map(|s| s.parse().ok()).collect();
         (

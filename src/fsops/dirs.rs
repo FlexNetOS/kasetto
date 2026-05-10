@@ -35,3 +35,17 @@ pub(crate) fn dirs_xdg_data_home() -> Result<PathBuf> {
 pub(crate) fn dirs_kasetto_data() -> Result<PathBuf> {
     Ok(dirs_xdg_data_home()?.join("kasetto"))
 }
+
+/// [XDG Base Directory](https://specifications.freedesktop.org/basedir-spec/latest/) cache home:
+/// `XDG_CACHE_HOME`, or `$HOME/.cache` when unset or empty.
+pub(crate) fn dirs_xdg_cache_home() -> Result<PathBuf> {
+    match std::env::var("XDG_CACHE_HOME") {
+        Ok(p) if !p.is_empty() => Ok(PathBuf::from(p)),
+        _ => Ok(dirs_home()?.join(".cache")),
+    }
+}
+
+/// Per-user Kasetto cache directory (update-check cache, etc.): `$XDG_CACHE_HOME/kasetto`.
+pub(crate) fn dirs_kasetto_cache() -> Result<PathBuf> {
+    Ok(dirs_xdg_cache_home()?.join("kasetto"))
+}

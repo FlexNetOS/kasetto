@@ -5,7 +5,7 @@ mod http;
 mod settings;
 
 pub(crate) use copy::copy_dir;
-pub(crate) use dirs::{dirs_home, dirs_kasetto_config, dirs_kasetto_data};
+pub(crate) use dirs::{dirs_home, dirs_kasetto_cache, dirs_kasetto_config, dirs_kasetto_data};
 pub(crate) use hash::{hash_dir, hash_file};
 pub(crate) use http::http_client;
 pub(crate) use settings::SettingsFile;
@@ -102,11 +102,8 @@ fn fetch_config_text(
 ) -> Result<(String, ConfigOrigin)> {
     if config_ref.starts_with("http://") || config_ref.starts_with("https://") {
         let fetch_url = match rewrite_browse_to_raw_url(config_ref) {
-            Some(rewritten) if rewritten != config_ref => {
-                eprintln!("note: rewrote browser URL to raw content: {rewritten}");
-                rewritten
-            }
-            _ => config_ref.to_string(),
+            Some(rewritten) => rewritten,
+            None => config_ref.to_string(),
         };
         let auth = auth_for_request_url(&fetch_url);
         let request = auth.apply(http_client()?.get(&fetch_url));

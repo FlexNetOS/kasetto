@@ -140,6 +140,17 @@ Self-update only works when Kasetto was installed via the standalone installer.
 For Homebrew or Cargo installs, use their own upgrade commands.
 
 </Callout>
+
+#### Update notifications
+
+Kasetto prints a yellow `New version available: x.y.z → a.b.c` line at the end of any command when a newer release exists on GitHub. The check runs in a background thread at most once every 24 hours and stores the result under `$XDG_CACHE_HOME/kasetto/update-check.json` (default: `~/.cache/kasetto/update-check.json`).
+
+The notice is suppressed when:
+
+- output is `--json`, `--plain`, or `--quiet`
+- the command emits machine-readable content (`completions`, `self update`)
+- stdout is not a TTY (e.g. piped to a file)
+
 ### `kst self uninstall`
 
 A full teardown: removes installed skills and MCP configs, clears Kasetto's data directories, and deletes the binary.

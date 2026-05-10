@@ -1,5 +1,6 @@
 use clap::Parser;
 use std::path::Path;
+use std::time::Duration;
 
 use crate::cli::{Cli, Commands, SelfAction};
 use crate::default_config_path;
@@ -9,7 +10,18 @@ pub fn run() -> Result<()> {
     let cli = Cli::parse();
     let program_name = current_program_name();
     let default_config = default_config_path();
-    match cli.command {
+
+    let update_handle = crate::update_notifier::spawn_background_check();
+    let suppress_notice = should_suppress_notice(&cli.command);
+
+    // Wait briefly so the cache is fresh before commands like `doctor` read it
+    // and before we render the end-of-run notice. Suppressed paths skip this so
+    // scripted output stays fast.
+    if !suppress_notice {
+        crate::update_notifier::wait_for_check(update_handle, Duration::from_millis(800));
+    }
+
+    let result = match cli.command {
         Some(command) => match command {
             Commands::Init { force, global } => crate::commands::init::run(force, global),
             Commands::Sync { sync } => {
@@ -64,6 +76,26 @@ pub fn run() -> Result<()> {
             }
         },
         None => crate::home::run(&program_name, &default_config),
+    };
+
+    if result.is_ok() {
+        crate::update_notifier::print_notice_if_available(suppress_notice);
+    }
+    result
+}
+
+/// Suppress the update notice for machine-readable / scripted output and for
+/// commands that already print version info.
+fn should_suppress_notice(command: &Option<Commands>) -> bool {
+    match command {
+        Some(Commands::Sync { sync }) => sync.json || sync.plain || sync.quiet,
+        Some(Commands::List { json, output, .. }) => *json || output.plain || output.quiet,
+        Some(Commands::Doctor { json, output, .. }) => *json || output.plain || output.quiet,
+        Some(Commands::Clean { json, output, .. }) => *json || output.plain || output.quiet,
+        Some(Commands::Completions { .. }) => true,
+        Some(Commands::ManageSelf { .. }) => true,
+        Some(Commands::Init { .. }) => false,
+        None => false,
     }
 }
 

@@ -40,6 +40,7 @@ CLI args → match cli.command
 - **`lock.rs`** - Manifest persistence: tracks installed skills + MCP assets, stores latest sync report as JSON blob
 - **`home/`** - Interactive welcome screen with `prompt.rs` for sync arg input
 - **`list/`** - Interactive TUI browser: `browse.rs` (event loop), `render.rs` (frame drawing), `session.rs` (state/guard), `tab.rs`, `types.rs`
+- **`update_notifier.rs`** - Background "new version available" notice. Fires a detached thread from `app::run` to refresh `$XDG_CACHE_HOME/kasetto/update-check.json` (24h TTL), then prints one yellow line at end of run. Reuses `is_newer`/`fetch_latest_release` from `commands::self_update`. Suppressed for `--json`/`--plain`/`--quiet`, `completions`, `self update`, and non-TTY stdout
 
 ### Site (`site/`)
 
