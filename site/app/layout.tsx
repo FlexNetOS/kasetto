@@ -31,8 +31,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${jetbrainsMono.className} dark`} data-theme="dark">
       <body>
+        <a href="#main" className="skip-link">
+          Skip to main content
+        </a>
         <TopNav />
-        {children}
+        <div id="main" tabIndex={-1}>
+          {children}
+        </div>
       </body>
     </html>
   );
