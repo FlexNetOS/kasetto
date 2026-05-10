@@ -10,7 +10,7 @@
   --surface0: #181715; /* hover/inset */
   --surface1: #232220; /* border default */
   --surface2: #34322f; /* border emphasized */
-  --overlay1: #7a7773; /* subtle text */
+  --overlay1: #8e8b86; /* subtle text — AA contrast vs --base */
   --subtext0: #a8a5a0; /* muted text */
   --subtext1: #cfcbc4; /* secondary text */
   --text: #ebe8e2; /* primary text — warm-neutral cream */
@@ -812,27 +812,42 @@ html[data-theme="dark"] {
   font-size: var(--fs-sm);
   line-height: 1.7;
   color: var(--fg-muted);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-.t-line {
-  display: inline-flex;
-  align-items: baseline;
-  gap: var(--space-3);
 }
 .t-rows {
   display: grid;
   grid-template-columns: auto 1fr auto;
-  column-gap: var(--space-4);
+  column-gap: var(--space-3);
   row-gap: var(--space-1);
-  padding-left: var(--space-2);
+}
+.t-line {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+.t-blank {
+  grid-column: 1 / -1;
+  height: var(--space-3);
 }
 .t-row {
   display: contents;
 }
+.t-row > :nth-child(1) {
+  padding-left: var(--space-2);
+}
 .t-row > :nth-child(3) {
   text-align: right;
+}
+.t-summary-line {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding-left: var(--space-2);
+  margin-top: var(--space-3);
+  border-top: 1px solid var(--surface2);
+  padding-top: var(--space-3);
 }
 .t-prompt {
   color: var(--accent);
@@ -858,6 +873,45 @@ html[data-theme="dark"] {
 .t-summary {
   color: var(--fg);
   font-weight: 600;
+}
+.t-summary-pair {
+  display: inline-flex;
+  align-items: baseline;
+}
+.t-fade {
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+.t-fade[data-shown="true"] {
+  opacity: 1;
+  transform: translateY(0);
+}
+.t-cursor {
+  display: inline-block;
+  width: 0.55em;
+  height: 1em;
+  margin-left: 4px;
+  background: var(--fg);
+  vertical-align: -2px;
+  animation: blink 1s steps(2, start) infinite;
+}
+@keyframes blink {
+  to {
+    visibility: hidden;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .t-fade {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .t-cursor {
+    animation: none;
+  }
 }
 @media (max-width: 640px) {
   .hero-terminal-body {
@@ -1087,4 +1141,39 @@ kbd {
   font-size: 0.85em;
   line-height: 1.4;
   white-space: nowrap;
+}
+
+/* ─── A11y: skip link + global focus-visible ─── */
+.skip-link {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: 100;
+  padding: var(--space-2) var(--space-4);
+  background: var(--accent);
+  color: var(--base);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wide);
+  border-radius: var(--radius-md);
+  text-transform: uppercase;
+  transform: translateY(-150%);
+  transition: transform 0.15s ease;
+}
+.skip-link:focus-visible {
+  transform: translateY(0);
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+#main:focus-visible {
+  outline: none;
 }

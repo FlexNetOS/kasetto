@@ -3,6 +3,7 @@ import { GoStar } from "react-icons/go";
 import { AgentsGrid } from "./components/agents-grid";
 import { CopyButton } from "./components/copy-button";
 import { ConfigExample, FeatureList } from "./components/feature-tabs";
+import { HeroTerminal } from "./components/hero-terminal";
 
 const INSTALL = [
   {
@@ -110,49 +111,7 @@ export default async function Page() {
           </a>
         </div>
 
-        <figure className="hero-terminal" aria-label="Example kasetto sync output">
-          <div className="hero-terminal-bar">
-            <span className="hero-terminal-dot" />
-            <span className="hero-terminal-dot" />
-            <span className="hero-terminal-dot" />
-            <span className="hero-terminal-title">~/projects/my-app</span>
-          </div>
-          <div className="hero-terminal-body">
-            <div className="t-line">
-              <span className="t-prompt">$</span>
-              <span>kasetto sync</span>
-            </div>
-            <div className="t-rows">
-              <div className="t-row">
-                <span className="t-ok">✓</span>
-                <span>anthropics/skills</span>
-                <span className="t-dim">12 skills</span>
-              </div>
-              <div className="t-row">
-                <span className="t-ok">✓</span>
-                <span>pivoshenko/skill-pack</span>
-                <span className="t-dim">5 skills</span>
-              </div>
-              <div className="t-row">
-                <span className="t-ok">✓</span>
-                <span>mcps/github</span>
-                <span className="t-dim">1 server</span>
-              </div>
-              <div className="t-row">
-                <span className="t-ok">✓</span>
-                <span>mcps/obsidian</span>
-                <span className="t-dim">1 server</span>
-              </div>
-            </div>
-            <div className="t-divider" />
-            <div className="t-summary-line">
-              <span className="t-dim">synced</span>
-              <span className="t-summary">17 skills</span>
-              <span className="t-dim">·</span>
-              <span className="t-summary">2 mcps</span>
-            </div>
-          </div>
-        </figure>
+        <HeroTerminal />
       </div>
 
       {/* ─────── SIDE A ─────── */}
