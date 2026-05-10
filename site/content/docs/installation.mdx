@@ -4,6 +4,7 @@ description: Install Kasetto on macOS, Linux, and Windows.
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 
 ## Installation Methods
 
@@ -13,16 +14,15 @@ Pick whichever method works for you — standalone installer, package manager, o
 
 The quickest way to get started — downloads and installs the binary in one command:
 
-=== "macOS and Linux"
-
+<Tabs items={['macOS and Linux', 'Windows']}>
+  <Tab value="macOS and Linux">
     Use `curl` to download the script and execute it with `sh`:
 
     ```bash
     curl -fsSL kasetto.dev/install | sh
     ```
-
-=== "Windows"
-
+  </Tab>
+  <Tab value="Windows">
     Use `irm` to download the script and execute it with `iex`:
 
     ```pwsh-session
@@ -30,23 +30,26 @@ The quickest way to get started — downloads and installs the binary in one com
     ```
 
     Changing the [execution policy](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies) allows running a script from the internet.
+  </Tab>
+</Tabs>
 
 <Callout type="tip">
 
 
 The installation script may be inspected before use:
 
-=== "macOS and Linux"
-
+<Tabs items={['macOS and Linux', 'Windows']}>
+  <Tab value="macOS and Linux">
     ```bash
     curl -fsSL https://raw.githubusercontent.com/pivoshenko/kasetto/main/scripts/install.sh | less
     ```
-
-=== "Windows"
-
+  </Tab>
+  <Tab value="Windows">
     ```pwsh-session
     PS> powershell -c "irm kasetto.dev/install.ps1 | more"
     ```
+  </Tab>
+</Tabs>
 
 Alternatively, binaries can be downloaded directly from [GitHub Releases](#github-releases).
 
@@ -126,32 +129,31 @@ You can run `echo $SHELL` to help determine your shell.
 </Callout>
 To get tab completions for `kst`, add one of these to your shell config:
 
-=== "Bash"
-
+<Tabs items={['Bash', 'Zsh', 'fish', 'PowerShell']}>
+  <Tab value="Bash">
     ```bash
     echo 'eval "$(kst completions bash)"' >> ~/.bashrc
     ```
-
-=== "Zsh"
-
+  </Tab>
+  <Tab value="Zsh">
     ```bash
     echo 'eval "$(kst completions zsh)"' >> ~/.zshrc
     ```
-
-=== "fish"
-
+  </Tab>
+  <Tab value="fish">
     ```bash
     echo 'kst completions fish | source' > ~/.config/fish/completions/kst.fish
     ```
-
-=== "PowerShell"
-
+  </Tab>
+  <Tab value="PowerShell">
     ```powershell
     if (!(Test-Path -Path $PROFILE)) {
       New-Item -ItemType File -Path $PROFILE -Force
     }
     Add-Content -Path $PROFILE -Value '(& kst completions powershell) | Out-String | Invoke-Expression'
     ```
+  </Tab>
+</Tabs>
 
 Then restart your shell or source the config file.
 

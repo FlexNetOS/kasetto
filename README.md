@@ -304,7 +304,7 @@ extends:
   - https://example.com/team-overlay.yaml
 ```
 
-See [docs/configuration.md](docs/configuration.md#extending-another-config) for the full merge-rules reference.
+See the [configuration docs](https://kasetto.dev/docs/configuration#extending-another-config) for the full merge-rules reference.
 
 ## Supported Agents
 

@@ -29,7 +29,7 @@ body:
       label: Documentation Location
       description: |
         Provide a link or path to the affected documentation, if available.
-      placeholder: "https://... or docs/path/file.md"
+      placeholder: "https://kasetto.dev/docs/... or site/content/docs/path/file.mdx"
     validations:
       required: false
 
