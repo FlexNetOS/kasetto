@@ -903,13 +903,36 @@ html[data-theme="dark"] {
     visibility: hidden;
   }
 }
+.t-spin {
+  display: inline-block;
+  width: 1ch;
+  height: 1em;
+  position: relative;
+  color: var(--accent-warm);
+  vertical-align: -2px;
+}
+.t-spin::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1.5px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: t-spin 0.7s linear infinite;
+}
+@keyframes t-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .t-fade {
     opacity: 1;
     transform: none;
     transition: none;
   }
-  .t-cursor {
+  .t-cursor,
+  .t-spin::before {
     animation: none;
   }
 }
