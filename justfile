@@ -48,12 +48,12 @@ demo-vhs:
     stage=$(mktemp -d)
     trap 'rm -rf "$stage"' EXIT
     curl -fsSL https://raw.githubusercontent.com/pivoshenko/pivoshenko.ai/main/kasetto.yaml -o "$stage/kasetto.yaml"
-    cp assets/hero.tape "$stage/hero.tape"
-    ( cd "$stage" && vhs hero.tape )
-    mv "$stage/hero.gif" assets/hero.gif
-    echo "rendered → assets/hero.gif"
+    cp assets/scripts/demo.tape "$stage/demo.tape"
+    ( cd "$stage" && vhs demo.tape )
+    mv "$stage/demo.gif" assets/demo.gif
+    echo "rendered → assets/demo.gif"
 
-demo-record:
-    fish assets/scripts/demo-record.fish
+demo-fish:
+    fish assets/scripts/demo.fish
 
 check: format lint test build
