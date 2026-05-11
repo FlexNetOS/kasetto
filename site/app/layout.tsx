@@ -3,10 +3,11 @@ import { JetBrains_Mono } from "next/font/google";
 import { TopNav } from "./components/top-nav";
 import "./globals.css";
 
+// Variable axis covers wght 100–800 — see SKILL.md for the brand weight ladder.
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
   display: "swap",
+  variable: "--font-jetbrains-mono",
 });
 
 export const metadata: Metadata = {
@@ -19,11 +20,6 @@ export const metadata: Metadata = {
     url: "https://kasetto.dev",
     siteName: "Kasetto",
     type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Kasetto",
-    description: "Declarative AI agent environment manager, written in Rust.",
   },
 };
 

@@ -2,27 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ─── Palette: neutral dark, warmth as accent only ─── */
+/* ─── Palette: warm-neutral dark, warmth as accent only ─── */
+/* OKLCH is canonical; sRGB hex declared first as fallback for non-OKLCH UAs. */
 :root {
-  /* Near-neutral dark with the faintest warm undertone */
-  --base: #0a0908; /* page bg */
-  --mantle: #111110; /* elevated surface (cards) */
-  --surface0: #181715; /* hover/inset */
-  --surface1: #232220; /* border default */
-  --surface2: #34322f; /* border emphasized */
-  --overlay1: #8e8b86; /* subtle text — AA contrast vs --base */
-  --subtext0: #a8a5a0; /* muted text */
-  --subtext1: #cfcbc4; /* secondary text */
-  --text: #ebe8e2; /* primary text — warm-neutral cream */
+  /* Surfaces — warm-neutral dark, never cold slate */
+  --base: #0a0908;
+  --base: oklch(0.13 0.004 50);
+  --mantle: #111110;
+  --mantle: oklch(0.16 0.004 50);
+  --surface0: #181715;
+  --surface0: oklch(0.19 0.005 50);
+  --surface1: #232220;
+  --surface1: oklch(0.23 0.005 50);
+  --surface2: #34322f;
+  --surface2: oklch(0.30 0.006 55);
 
-  /* Restrained accents */
-  --mauve: #b89cdc; /* Side A — soft violet */
+  /* Text — warm cream, not pure white */
+  --overlay1: #8e8b86;
+  --overlay1: oklch(0.62 0.005 55);
+  --subtext0: #a8a5a0;
+  --subtext0: oklch(0.71 0.005 55);
+  --subtext1: #cfcbc4;
+  --subtext1: oklch(0.83 0.008 60);
+  --text: #ebe8e2;
+  --text: oklch(0.92 0.008 65);
+
+  /* Accents — Side A (mauve) and Side B (rust); used sparingly, never as field */
+  --mauve: #b89cdc;
+  --mauve: oklch(0.71 0.10 300);
   --lavender: #a8a3d8;
+  --lavender: oklch(0.70 0.07 280);
   --sky: #8aaab8;
+  --sky: oklch(0.69 0.04 230);
   --green: #9ab28a;
-  --yellow: #d4b070; /* Side B — muted amber */
-  --rust: #d97757; /* hero highlight */
+  --green: oklch(0.73 0.05 140);
+  --yellow: #d4b070;
+  --yellow: oklch(0.78 0.10 80);
+  --rust: #d97757;
+  --rust: oklch(0.66 0.13 38);
   --tape: #c4ad88;
+  --tape: oklch(0.74 0.05 75);
 
   /* Semantic */
   --bg: var(--base);
@@ -36,10 +55,12 @@
   --accent-cool: var(--lavender);
   --accent-warm: var(--rust);
   --accent-rust: var(--rust);
-  --kst-purple: #c86bff;
 
   --grid-color: rgba(255, 245, 230, 0.035);
   --grid-size: 96px;
+
+  /* Film-grain texture — analog cassette texture cue, ~1.5% opacity */
+  --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 0.96  0 0 0 0 0.89  0 0 0 0.5 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
 
   /* ─── Type scale ─── */
   --fs-xs: 11px;
@@ -79,6 +100,19 @@
 
   /* ─── Font stacks ─── */
   --font-mono: "JetBrains Mono", "Courier New", Courier, monospace;
+}
+
+/* ─── P3 wide-gamut enrichment (accents only; surfaces stay sRGB) ─── */
+@supports (color: color(display-p3 1 1 1)) {
+  :root {
+    --mauve: color(display-p3 0.74 0.62 0.88);
+    --lavender: color(display-p3 0.68 0.65 0.86);
+    --rust: color(display-p3 0.84 0.48 0.36);
+    --yellow: color(display-p3 0.83 0.70 0.46);
+    --sky: color(display-p3 0.56 0.67 0.73);
+    --green: color(display-p3 0.62 0.70 0.56);
+    --tape: color(display-p3 0.76 0.68 0.55);
+  }
 }
 
 /* ─── Reset ─── */
@@ -158,12 +192,32 @@ button {
 
 /* ─── Grid box — bordered container ─── */
 .grid-box {
+  position: relative;
   border: 1px solid var(--border);
   width: 100%;
   background: var(--bg-elevated);
   box-shadow:
     0 1px 0 rgba(255, 220, 170, 0.02) inset,
     0 8px 24px -12px rgba(0, 0, 0, 0.6);
+}
+
+/* Film-grain overlay — analog cassette texture cue */
+.grid-box::after,
+.hero-terminal::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: var(--grain);
+  background-size: 240px 240px;
+  opacity: 0.025;
+  mix-blend-mode: overlay;
+  z-index: 0;
+}
+.grid-box > *,
+.hero-terminal > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* ─── Hero ─── */
@@ -264,7 +318,7 @@ button {
 }
 
 .install-pill-prompt {
-  color: var(--kst-purple);
+  color: var(--mauve);
   font-weight: 600;
   user-select: none;
   flex-shrink: 0;
