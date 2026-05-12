@@ -99,149 +99,30 @@ pub(super) fn draw(
         return Ok(());
     }
 
+    let layout = TabLayout {
+        content_top,
+        content_height,
+        width,
+    };
     match current_tab {
-        Tab::Skills => {
-            let two_pane = content_height >= 8;
-            let side_by_side = two_pane && width >= 80;
-            if two_pane && !side_by_side {
-                let list_height = max(5, content_height / 2);
-                state.keep_visible(list_height.saturating_sub(2), input.skills.len());
-                draw_list_pane(
-                    stdout,
-                    PaneRect {
-                        left: 0,
-                        top: content_top,
-                        width,
-                        height: list_height,
-                    },
-                    &input.skills,
-                    state,
-                    "Installed Skills",
-                    &colors,
-                )?;
-                draw_skill_detail_pane(
-                    stdout,
-                    0,
-                    content_top + list_height,
-                    width,
-                    content_height.saturating_sub(list_height),
-                    input.skills.get(state.selected),
-                    &colors,
-                )?;
-            } else if side_by_side {
-                let list_width = (width / 3).clamp(34, 46);
-                let detail_width = width.saturating_sub(list_width + 1);
-                state.keep_visible(content_height.saturating_sub(2), input.skills.len());
-                draw_list_pane(
-                    stdout,
-                    PaneRect {
-                        left: 0,
-                        top: content_top,
-                        width: list_width,
-                        height: content_height,
-                    },
-                    &input.skills,
-                    state,
-                    "Installed Skills",
-                    &colors,
-                )?;
-                draw_skill_detail_pane(
-                    stdout,
-                    list_width + 1,
-                    content_top,
-                    detail_width,
-                    content_height,
-                    input.skills.get(state.selected),
-                    &colors,
-                )?;
-            } else {
-                state.keep_visible(content_height.saturating_sub(2), input.skills.len());
-                draw_list_pane(
-                    stdout,
-                    PaneRect {
-                        left: 0,
-                        top: content_top,
-                        width,
-                        height: content_height,
-                    },
-                    &input.skills,
-                    state,
-                    "Installed Skills",
-                    &colors,
-                )?;
-            }
-        }
-        Tab::Mcps => {
-            let two_pane = content_height >= 8;
-            let side_by_side = two_pane && width >= 80;
-            if two_pane && !side_by_side {
-                let list_height = max(5, content_height / 2);
-                state.keep_visible(list_height.saturating_sub(2), input.mcps.len());
-                draw_list_pane(
-                    stdout,
-                    PaneRect {
-                        left: 0,
-                        top: content_top,
-                        width,
-                        height: list_height,
-                    },
-                    &input.mcps,
-                    state,
-                    "MCP Servers",
-                    &colors,
-                )?;
-                draw_mcp_detail_pane(
-                    stdout,
-                    0,
-                    content_top + list_height,
-                    width,
-                    content_height.saturating_sub(list_height),
-                    input.mcps.get(state.selected),
-                    &colors,
-                )?;
-            } else if side_by_side {
-                let list_width = (width / 3).clamp(34, 46);
-                let detail_width = width.saturating_sub(list_width + 1);
-                state.keep_visible(content_height.saturating_sub(2), input.mcps.len());
-                draw_list_pane(
-                    stdout,
-                    PaneRect {
-                        left: 0,
-                        top: content_top,
-                        width: list_width,
-                        height: content_height,
-                    },
-                    &input.mcps,
-                    state,
-                    "MCP Servers",
-                    &colors,
-                )?;
-                draw_mcp_detail_pane(
-                    stdout,
-                    list_width + 1,
-                    content_top,
-                    detail_width,
-                    content_height,
-                    input.mcps.get(state.selected),
-                    &colors,
-                )?;
-            } else {
-                state.keep_visible(content_height.saturating_sub(2), input.mcps.len());
-                draw_list_pane(
-                    stdout,
-                    PaneRect {
-                        left: 0,
-                        top: content_top,
-                        width,
-                        height: content_height,
-                    },
-                    &input.mcps,
-                    state,
-                    "MCP Servers",
-                    &colors,
-                )?;
-            }
-        }
+        Tab::Skills => draw_tab_content(
+            stdout,
+            &input.skills,
+            "Installed Skills",
+            state,
+            layout,
+            &colors,
+            draw_skill_detail_pane,
+        )?,
+        Tab::Mcps => draw_tab_content(
+            stdout,
+            &input.mcps,
+            "MCP Servers",
+            state,
+            layout,
+            &colors,
+            draw_mcp_detail_pane,
+        )?,
     }
 
     let tab_hint = if tabs.len() > 1 {
@@ -257,6 +138,104 @@ pub(super) fn draw(
         &colors,
     )?;
     stdout.flush()?;
+    Ok(())
+}
+
+#[derive(Clone, Copy)]
+struct TabLayout {
+    content_top: usize,
+    content_height: usize,
+    width: usize,
+}
+
+fn draw_tab_content<T, F>(
+    stdout: &mut Stdout,
+    items: &[T],
+    title: &str,
+    state: &mut ListState,
+    layout: TabLayout,
+    colors: &Colors,
+    draw_detail: F,
+) -> Result<()>
+where
+    T: ListItem,
+    F: Fn(&mut Stdout, usize, usize, usize, usize, Option<&T>, &Colors) -> Result<()>,
+{
+    let TabLayout {
+        content_top,
+        content_height,
+        width,
+    } = layout;
+    let two_pane = content_height >= 8;
+    let side_by_side = two_pane && width >= 80;
+
+    if two_pane && !side_by_side {
+        let list_height = max(5, content_height / 2);
+        state.keep_visible(list_height.saturating_sub(2), items.len());
+        draw_list_pane(
+            stdout,
+            PaneRect {
+                left: 0,
+                top: content_top,
+                width,
+                height: list_height,
+            },
+            items,
+            state,
+            title,
+            colors,
+        )?;
+        draw_detail(
+            stdout,
+            0,
+            content_top + list_height,
+            width,
+            content_height.saturating_sub(list_height),
+            items.get(state.selected),
+            colors,
+        )?;
+    } else if side_by_side {
+        let list_width = (width / 3).clamp(34, 46);
+        let detail_width = width.saturating_sub(list_width + 1);
+        state.keep_visible(content_height.saturating_sub(2), items.len());
+        draw_list_pane(
+            stdout,
+            PaneRect {
+                left: 0,
+                top: content_top,
+                width: list_width,
+                height: content_height,
+            },
+            items,
+            state,
+            title,
+            colors,
+        )?;
+        draw_detail(
+            stdout,
+            list_width + 1,
+            content_top,
+            detail_width,
+            content_height,
+            items.get(state.selected),
+            colors,
+        )?;
+    } else {
+        state.keep_visible(content_height.saturating_sub(2), items.len());
+        draw_list_pane(
+            stdout,
+            PaneRect {
+                left: 0,
+                top: content_top,
+                width,
+                height: content_height,
+            },
+            items,
+            state,
+            title,
+            colors,
+        )?;
+    }
     Ok(())
 }
 
