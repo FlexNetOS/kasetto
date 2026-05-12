@@ -2,11 +2,48 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.9.1] - 2026-05-12
+
+### Bug fixes
+
+- **tui**: Paint banner Japanese subtitle in amber Side B
+
+### Documentation
+
+- Remove demo tapes
+- **demo**: Add hero demo tape and screen-recording script
+- Link readme logo to kasetto.dev
+
+### Miscellaneous
+
+- **tests**: Silence field-reassign and useless-vec clippy lints
+- **site**: Bump biome schema to 2.4.14
+- **brand**: Recolor logo Japanese subtitle to amber
+- Update name of demo scripts
+- **brand**: Align visual identity with cassette DNA
+- **gitignore**: Ignore macos .ds_store files and local .claude/ config
+
+### Refactor
+
+- **list**: Extract draw_tab_content to dedupe tab arms
+- **list**: Split run into load and print helpers
+- **clean**: Split run into removal and report helpers
+- **tui**: Drop unused crossterm SUCCESS and WARNING consts
+- **tui**: Migrate palette to brand RGB and add Side B accent
+
+### Style
+
+- **site**: Swap Side B accent from rust to amber
+
 ## [2.9.0] - 2026-05-10
 
 ### Features
 
 - **cli**: Notify when a new version is released
+
+### Release
+
+- V2.9.0
 
 ## [2.8.1] - 2026-05-10
 
