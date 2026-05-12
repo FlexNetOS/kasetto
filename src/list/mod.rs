@@ -7,4 +7,4 @@ mod tab;
 mod types;
 
 pub(crate) use browse::browse;
-pub(crate) use types::{mcp_asset_entries, BrowseInput};
+pub(crate) use types::{mcp_asset_entries, AssetEntry, BrowseInput};

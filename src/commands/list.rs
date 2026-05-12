@@ -3,7 +3,7 @@ use std::io::IsTerminal;
 use crate::banner::print_banner;
 use crate::colors::{RESET, SECONDARY, WARNING_EMPHASIS};
 use crate::error::Result;
-use crate::list::{browse as browse_list, mcp_asset_entries, BrowseInput};
+use crate::list::{browse as browse_list, mcp_asset_entries, AssetEntry, BrowseInput};
 use crate::lock::{load_lock, LockFile};
 use crate::model::{resolve_scope, InstalledSkill, Scope};
 use crate::profile::{format_updated_ago, read_skill_profile};
@@ -24,28 +24,7 @@ pub(crate) fn run(
 
     let project_root = std::env::current_dir().unwrap_or_default();
     let merged = scope_override.is_none();
-    let (skills, mcps) = if let Some(s) = scope_override {
-        let scope = resolve_scope(Some(s), None);
-        let lock = load_lock(scope, &project_root)?;
-        (
-            installed_skills_from_lock(&lock, scope, false),
-            mcp_asset_entries(&lock, scope),
-        )
-    } else {
-        let global_lock = load_lock(Scope::Global, &project_root)?;
-        let project_lock = load_lock(Scope::Project, &project_root)?;
-        let mut skills = installed_skills_from_lock(&global_lock, Scope::Global, true);
-        skills.extend(installed_skills_from_lock(
-            &project_lock,
-            Scope::Project,
-            true,
-        ));
-        skills.sort_by_cached_key(|s| (scope_ord(s.scope), s.name.to_lowercase()));
-        let mut mcps = mcp_asset_entries(&global_lock, Scope::Global);
-        mcps.extend(mcp_asset_entries(&project_lock, Scope::Project));
-        mcps.sort_by_cached_key(|m| (m.name.to_lowercase(), scope_ord(m.scope)));
-        (skills, mcps)
-    };
+    let (skills, mcps) = load_skills_and_mcps(scope_override, &project_root)?;
 
     if as_json {
         let output = serde_json::json!({
@@ -87,56 +66,92 @@ pub(crate) fn run(
         }
     }
 
-    if !skills.is_empty() {
-        print_section_header("Skills", skills.len(), color);
-        println!();
-        for item in &skills {
-            let scope_note = if merged {
-                format!(" [{}]", scope_label(item.scope))
-            } else {
-                String::new()
-            };
-            if color {
-                println!(
-                    "  {WARNING_EMPHASIS}{}{}{RESET}  {SECONDARY}updated {} ({}){RESET}",
-                    item.name, scope_note, item.updated_ago, item.updated_at,
-                );
-            } else {
-                println!(
-                    "  {}{}  updated {} ({})",
-                    item.name, scope_note, item.updated_ago, item.updated_at,
-                );
-            }
-            println!("    {}", item.description);
-            println!("    source: {}", item.source);
-            println!();
-        }
-    }
-
-    if !mcps.is_empty() {
-        print_section_header("MCP Servers", mcps.len(), color);
-        println!();
-        for m in &mcps {
-            let scope_note = if merged {
-                format!(" [{}]", scope_label(m.scope))
-            } else {
-                String::new()
-            };
-            if m.pack_file.is_empty() && m.source.is_empty() {
-                println!("  {}{}", m.name, scope_note);
-            } else if m.pack_file.is_empty() {
-                println!("  {}{}  source {}", m.name, scope_note, m.source);
-            } else {
-                println!(
-                    "  {}{}  pack {}  source {}",
-                    m.name, scope_note, m.pack_file, m.source
-                );
-            }
-        }
-        println!();
-    }
+    print_skills(&skills, merged, color);
+    print_mcps(&mcps, merged, color);
 
     Ok(())
+}
+
+fn load_skills_and_mcps(
+    scope_override: Option<Scope>,
+    project_root: &std::path::Path,
+) -> Result<(Vec<InstalledSkill>, Vec<AssetEntry>)> {
+    if let Some(s) = scope_override {
+        let scope = resolve_scope(Some(s), None);
+        let lock = load_lock(scope, project_root)?;
+        return Ok((
+            installed_skills_from_lock(&lock, scope, false),
+            mcp_asset_entries(&lock, scope),
+        ));
+    }
+    let global_lock = load_lock(Scope::Global, project_root)?;
+    let project_lock = load_lock(Scope::Project, project_root)?;
+    let mut skills = installed_skills_from_lock(&global_lock, Scope::Global, true);
+    skills.extend(installed_skills_from_lock(
+        &project_lock,
+        Scope::Project,
+        true,
+    ));
+    skills.sort_by_cached_key(|s| (scope_ord(s.scope), s.name.to_lowercase()));
+    let mut mcps = mcp_asset_entries(&global_lock, Scope::Global);
+    mcps.extend(mcp_asset_entries(&project_lock, Scope::Project));
+    mcps.sort_by_cached_key(|m| (m.name.to_lowercase(), scope_ord(m.scope)));
+    Ok((skills, mcps))
+}
+
+fn print_skills(skills: &[InstalledSkill], merged: bool, color: bool) {
+    if skills.is_empty() {
+        return;
+    }
+    print_section_header("Skills", skills.len(), color);
+    println!();
+    for item in skills {
+        let scope_note = if merged {
+            format!(" [{}]", scope_label(item.scope))
+        } else {
+            String::new()
+        };
+        if color {
+            println!(
+                "  {WARNING_EMPHASIS}{}{}{RESET}  {SECONDARY}updated {} ({}){RESET}",
+                item.name, scope_note, item.updated_ago, item.updated_at,
+            );
+        } else {
+            println!(
+                "  {}{}  updated {} ({})",
+                item.name, scope_note, item.updated_ago, item.updated_at,
+            );
+        }
+        println!("    {}", item.description);
+        println!("    source: {}", item.source);
+        println!();
+    }
+}
+
+fn print_mcps(mcps: &[AssetEntry], merged: bool, color: bool) {
+    if mcps.is_empty() {
+        return;
+    }
+    print_section_header("MCP Servers", mcps.len(), color);
+    println!();
+    for m in mcps {
+        let scope_note = if merged {
+            format!(" [{}]", scope_label(m.scope))
+        } else {
+            String::new()
+        };
+        if m.pack_file.is_empty() && m.source.is_empty() {
+            println!("  {}{}", m.name, scope_note);
+        } else if m.pack_file.is_empty() {
+            println!("  {}{}  source {}", m.name, scope_note, m.source);
+        } else {
+            println!(
+                "  {}{}  pack {}  source {}",
+                m.name, scope_note, m.pack_file, m.source
+            );
+        }
+    }
+    println!();
 }
 
 fn scope_ord(s: Scope) -> u8 {
