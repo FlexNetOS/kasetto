@@ -58,9 +58,7 @@ pub(crate) const RGB_RED: (u8, u8, u8) = (0xc2, 0x54, 0x50);
 pub(crate) mod term {
     use crossterm::style::Color;
 
-    use super::{
-        RGB_AMBER, RGB_CREAM, RGB_GREEN, RGB_MAUVE, RGB_RED, RGB_SKY, RGB_SUBTLE, RGB_TAPE,
-    };
+    use super::{RGB_AMBER, RGB_CREAM, RGB_MAUVE, RGB_RED, RGB_SKY, RGB_SUBTLE};
 
     const fn rgb(t: (u8, u8, u8)) -> Color {
         Color::Rgb {
@@ -80,10 +78,6 @@ pub(crate) mod term {
     pub(crate) const SECONDARY: Color = rgb(RGB_SUBTLE);
     /// [`super::INFO`] — muted sky.
     pub(crate) const INFO: Color = rgb(RGB_SKY);
-    /// [`super::SUCCESS`] — muted green.
-    pub(crate) const SUCCESS: Color = rgb(RGB_GREEN);
-    /// [`super::WARNING`] — tape tan (muted, distinct from amber Side B).
-    pub(crate) const WARNING: Color = rgb(RGB_TAPE);
     /// [`super::ERROR`] — warm red.
     pub(crate) const ERROR: Color = rgb(RGB_RED);
     /// Primary body text on colored TUI backgrounds — cream, not pure white.
