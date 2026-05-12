@@ -257,8 +257,10 @@ mod tests {
         let dir = temp_dir("kasetto-lock-data");
         fs::create_dir_all(&dir).unwrap();
 
-        let mut lock = LockFile::default();
-        lock.last_run = Some("12345".to_string());
+        let mut lock = LockFile {
+            last_run: Some("12345".to_string()),
+            ..Default::default()
+        };
         lock.skills.insert(
             "src::skill-a".to_string(),
             SkillEntry {
@@ -309,8 +311,10 @@ mod tests {
 
     #[test]
     fn clear_all_empties_everything() {
-        let mut lock = LockFile::default();
-        lock.last_run = Some("999".to_string());
+        let mut lock = LockFile {
+            last_run: Some("999".to_string()),
+            ..Default::default()
+        };
         lock.skills.insert(
             "k".to_string(),
             SkillEntry {
@@ -402,8 +406,10 @@ mod tests {
     #[test]
     fn state_round_trip() {
         let mut lock = LockFile::default();
-        let mut state = State::default();
-        state.last_run = Some("ts".to_string());
+        let mut state = State {
+            last_run: Some("ts".to_string()),
+            ..Default::default()
+        };
         state.skills.insert(
             "k".to_string(),
             SkillEntry {
