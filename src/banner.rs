@@ -1,7 +1,7 @@
 use std::io::IsTerminal;
 use unicode_width::UnicodeWidthStr;
 
-use crate::colors::{ansi_cursor_column_1based, ansi_cursor_up, BANNER, RESET, SECONDARY};
+use crate::colors::{ansi_cursor_column_1based, ansi_cursor_up, ATTENTION, BANNER, RESET};
 
 const BANNER_TOP: &str = "╔═══════════════════════════════════════════════════════════════╗";
 const BANNER_BOTTOM: &str = "╚═══════════════════════════════════════════════════════════════╝";
@@ -85,7 +85,7 @@ pub(crate) fn banner_string(use_color: bool) -> String {
     let mut lines = banner_lines();
     if use_color {
         if let Some(subtitle) = lines.get_mut(LOGO_LINES.len() + 2) {
-            *subtitle = colorize_content(subtitle, JAPANESE_SUBTITLE, SECONDARY, BANNER);
+            *subtitle = colorize_content(subtitle, JAPANESE_SUBTITLE, ATTENTION, BANNER);
         }
         format!("{}{}{RESET}\n", BANNER, lines.join("\n"))
     } else {
