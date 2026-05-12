@@ -4,9 +4,11 @@ use crate::banner::print_banner_or_plain;
 use crate::colors::{ACCENT, ERROR, RESET, SUCCESS, WARNING};
 use crate::error::Result;
 use crate::fsops::{dirs_home, dirs_kasetto_config};
-use crate::lock::{load_lock, save_lock};
+use crate::lock::{load_lock, save_lock, LockFile};
 use crate::mcps::remove_mcp_server;
-use crate::model::{all_mcp_project_targets, all_mcp_settings_targets, resolve_scope, Scope};
+use crate::model::{
+    all_mcp_project_targets, all_mcp_settings_targets, resolve_scope, Scope, State,
+};
 use crate::profile::list_color_enabled;
 use crate::ui::{animations_enabled, print_json, SYM_OK};
 
@@ -40,28 +42,7 @@ pub(crate) fn run(
     let mcps_count = mcp_assets.len();
 
     if !dry_run {
-        for entry in state.skills.values() {
-            let _ = fs::remove_dir_all(&entry.destination);
-        }
-
-        let mcp_targets = match scope {
-            Scope::Project => all_mcp_project_targets(&project_root),
-            Scope::Global => {
-                let home = dirs_home()?;
-                let kasetto_config = dirs_kasetto_config()?;
-                all_mcp_settings_targets(&home, &kasetto_config)
-            }
-        };
-        for (_id, servers_csv) in &mcp_assets {
-            for server_name in servers_csv.split(',').filter(|s| !s.is_empty()) {
-                for target in &mcp_targets {
-                    if target.path.exists() {
-                        let _ = remove_mcp_server(server_name, target);
-                    }
-                }
-            }
-        }
-
+        apply_removals(&state, &mcp_assets, scope, &project_root)?;
         lock.clear_all();
         save_lock(&lock, scope, &project_root)?;
     }
@@ -75,70 +56,103 @@ pub(crate) fn run(
     if as_json {
         print_json(&output)?;
     } else if !quiet {
-        let color = list_color_enabled() && !plain;
-        let (label_color, prefix) = if dry_run {
-            (WARNING, "Would remove")
-        } else {
-            (ERROR, "Removed")
-        };
-        println!();
-        println!(
-            "  {label_color}{prefix}{RESET}: {}",
-            skills_count + mcps_count
-        );
-
-        if dry_run {
-            println!();
-            if !state.skills.is_empty() {
-                println!("  Skills:");
-                for entry in state.skills.values() {
-                    if color {
-                        println!(
-                            "    {ACCENT}skill{RESET}  {}  ({})",
-                            entry.destination, entry.skill
-                        );
-                    } else {
-                        println!("    skill  {}  ({})", entry.destination, entry.skill);
-                    }
-                }
-            }
-            let mcp_packs: Vec<_> = lock
-                .assets
-                .iter()
-                .filter(|(_, a)| a.kind == "mcp")
-                .collect();
-            if !mcp_packs.is_empty() {
-                println!("  MCP packs (server names merged from kasetto):");
-                for (_, a) in mcp_packs {
-                    let servers: String = a
-                        .destination
-                        .split(',')
-                        .filter(|s| !s.is_empty())
-                        .collect::<Vec<_>>()
-                        .join(", ");
-                    if color {
-                        println!(
-                            "    {ACCENT}mcp{RESET}    {}  (pack: {}, source: {})",
-                            servers, a.name, a.source
-                        );
-                    } else {
-                        println!(
-                            "    mcp    {}  (pack: {}, source: {})",
-                            servers, a.name, a.source
-                        );
-                    }
-                }
-            }
-        }
-
-        if !dry_run {
-            println!();
-            println!("{SUCCESS}{SYM_OK}{RESET} Lock file reset.");
-        } else {
-            println!();
-            println!("Run without {ACCENT}--dry-run{RESET} to apply.");
-        }
+        print_report(&lock, &state, dry_run, plain, skills_count + mcps_count);
     }
 
     Ok(())
+}
+
+fn apply_removals(
+    state: &State,
+    mcp_assets: &[(&str, &str)],
+    scope: Scope,
+    project_root: &std::path::Path,
+) -> Result<()> {
+    for entry in state.skills.values() {
+        let _ = fs::remove_dir_all(&entry.destination);
+    }
+
+    let mcp_targets = match scope {
+        Scope::Project => all_mcp_project_targets(project_root),
+        Scope::Global => {
+            let home = dirs_home()?;
+            let kasetto_config = dirs_kasetto_config()?;
+            all_mcp_settings_targets(&home, &kasetto_config)
+        }
+    };
+    for (_id, servers_csv) in mcp_assets {
+        for server_name in servers_csv.split(',').filter(|s| !s.is_empty()) {
+            for target in &mcp_targets {
+                if target.path.exists() {
+                    let _ = remove_mcp_server(server_name, target);
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn print_report(lock: &LockFile, state: &State, dry_run: bool, plain: bool, total: usize) {
+    let color = list_color_enabled() && !plain;
+    let (label_color, prefix) = if dry_run {
+        (WARNING, "Would remove")
+    } else {
+        (ERROR, "Removed")
+    };
+    println!();
+    println!("  {label_color}{prefix}{RESET}: {total}");
+
+    if dry_run {
+        print_dry_run_detail(lock, state, color);
+        println!();
+        println!("Run without {ACCENT}--dry-run{RESET} to apply.");
+    } else {
+        println!();
+        println!("{SUCCESS}{SYM_OK}{RESET} Lock file reset.");
+    }
+}
+
+fn print_dry_run_detail(lock: &LockFile, state: &State, color: bool) {
+    println!();
+    if !state.skills.is_empty() {
+        println!("  Skills:");
+        for entry in state.skills.values() {
+            if color {
+                println!(
+                    "    {ACCENT}skill{RESET}  {}  ({})",
+                    entry.destination, entry.skill
+                );
+            } else {
+                println!("    skill  {}  ({})", entry.destination, entry.skill);
+            }
+        }
+    }
+    let mcp_packs: Vec<_> = lock
+        .assets
+        .iter()
+        .filter(|(_, a)| a.kind == "mcp")
+        .collect();
+    if mcp_packs.is_empty() {
+        return;
+    }
+    println!("  MCP packs (server names merged from kasetto):");
+    for (_, a) in mcp_packs {
+        let servers: String = a
+            .destination
+            .split(',')
+            .filter(|s| !s.is_empty())
+            .collect::<Vec<_>>()
+            .join(", ");
+        if color {
+            println!(
+                "    {ACCENT}mcp{RESET}    {}  (pack: {}, source: {})",
+                servers, a.name, a.source
+            );
+        } else {
+            println!(
+                "    mcp    {}  (pack: {}, source: {})",
+                servers, a.name, a.source
+            );
+        }
+    }
 }
