@@ -5,8 +5,8 @@ use std::thread;
 use std::time::Duration;
 
 use crate::colors::{
-    ACCENT, CHIP_ERROR, CHIP_NEUTRAL, CHIP_SUCCESS, CHIP_WARNING, CLEAR_LINE, ERROR, RESET,
-    SECONDARY, SUCCESS,
+    ACCENT, ACCENT_WARM, CHIP_ERROR, CHIP_NEUTRAL, CHIP_SUCCESS, CHIP_WARNING, CLEAR_LINE, ERROR,
+    RESET, SECONDARY, SUCCESS,
 };
 use crate::error::Result;
 
@@ -93,9 +93,11 @@ where
         while !stop_flag.load(Ordering::Relaxed) {
             let _ = write!(
                 stderr,
-                "{}{} {}",
+                "{}{}{}{} {}",
                 CLEAR_LINE,
+                ACCENT_WARM,
                 SPINNER_FRAMES[idx % SPINNER_FRAMES.len()],
+                RESET,
                 thread_label
             );
             let _ = stderr.flush();
