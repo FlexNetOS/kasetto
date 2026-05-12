@@ -308,8 +308,6 @@ fn remove_stale(
     }
 }
 
-/// Prompt the user to confirm registration of new MCP servers.
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -335,7 +333,7 @@ mod tests {
             is_new: false,
         };
 
-        let pending = vec![new_entry, update_entry];
+        let pending = [new_entry, update_entry];
         let new_servers: Vec<&PendingMcp> = pending.iter().filter(|p| p.is_new).collect();
 
         assert_eq!(new_servers.len(), 1);
@@ -350,7 +348,7 @@ mod tests {
 
     #[test]
     fn pending_mcp_no_new_servers_skips_gate() {
-        let update_only = vec![PendingMcp {
+        let update_only = [PendingMcp {
             source: "https://github.com/org/pack".into(),
             file_name: "mcp.json".into(),
             mcp_path: PathBuf::from("/tmp/mcp.json"),
