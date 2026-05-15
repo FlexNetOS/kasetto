@@ -22,6 +22,7 @@ export async function TopNav() {
     <nav className="top-nav">
       <div className="top-nav-inner">
         <a href="/" className="top-nav-brand" aria-label="Kasetto home">
+          <img src="/favicon.svg" alt="" className="top-nav-logo-img" aria-hidden />
           <span className="top-nav-name">KASETTO</span>
         </a>
         <div className="top-nav-links">
