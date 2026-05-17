@@ -24,9 +24,9 @@ Kasetto is a **community-first** project that solves a different problem: **decl
 
 - **Declarative** — one YAML config describes your entire skill setup. Version it, share it, bootstrap a whole team in seconds. The config is the source of truth — readable, auditable, version-controlled.
 - **Enterprise & private repos** — GitHub, GitLab, Bitbucket, Codeberg, Gitea, and self-hosted instances out of the box. Onboard new engineers in one command. Everyone gets the exact same environment — zero drift, zero surprises.
-- **Multi-agent** — 21 built-in agent presets: Claude Code, Cursor, Codex, Windsurf, Copilot, Gemini CLI, and [many more](#supported-agents). One config, every agent updated.
+- **Multi-agent** — every major AI agent supported: Claude Code, Cursor, Codex, Windsurf, Copilot, Gemini CLI, and [many more](#supported-agents). One config, every agent updated.
 - **Skills & MCP** — any directory with a `SKILL.md` is a skill — no registry, no boilerplate. MCP server configs are auto-merged into every supported format (Cursor JSON, Claude JSON, Copilot VS Code, Codex TOML).
-- **Speed** — written in Rust. SHA-256 content hashing and lock file diffing mean only what changed gets touched. Full sync across all 21 agents finishes in seconds.
+- **Speed** — written in Rust. SHA-256 content hashing and lock file diffing mean only what changed gets touched. Full sync across every agent finishes in seconds.
 - **Universal** — single static binary for macOS, Linux, and Windows. Install as `kasetto`, run as `kst`. CI-friendly with `--json` output and proper exit codes.
 
 > Inspired by [uv](https://github.com/astral-sh/uv) - what uv did for Python packages, Kasetto aims to do for AI skills.
@@ -82,15 +82,23 @@ cargo install --path .
 
 ## Getting Started
 
-**1. Sync from a remote config or a local file:**
+**1. Sync skills into your agents:**
 
 ```bash
-# pull a shared team config from a URL
-kst sync --config https://example.com/team-skills.yaml
+# uses ./kasetto.yaml in the current directory
+kst sync
 
-# or use a local file
-kst sync --config kasetto.yaml
+# or point at a shared team config over HTTPS
+kst sync --config https://example.com/team-skills.yaml
 ```
+
+Want bare `kst sync` to always pull from a remote URL? Persist it in `~/.config/kasetto/config.yaml`:
+
+```yaml
+source: https://github.com/pivoshenko/pivoshenko.ai/blob/main/kasetto.yaml
+```
+
+After that, `kst sync` resolves the URL automatically — no `--config` flag needed.
 
 That's it. Kasetto pulls the skills and installs them into the right agent directory. The next time you run `sync`, only what changed gets updated.
 
@@ -105,102 +113,18 @@ kst doctor    # version, paths, last sync status
 
 ## Commands
 
-### `kst init`
+One-line synopsis below. Full flags and examples in the [commands reference](https://kasetto.dev/docs/commands).
 
-Generates a starter config file (`./kasetto.yaml` by default, or global config with `--global`).
+- **`kst init`** — generate a starter `kasetto.yaml` (local or `--global`).
+- **`kst sync`** — read config, fetch sources, install skills + MCPs into agent dirs.
+- **`kst list`** — interactive TUI (or plain/JSON) of installed skills and MCPs from the lock file.
+- **`kst doctor`** — local diagnostics: version, paths, last sync status, broken skills.
+- **`kst clean`** — remove tracked skills and MCP configs for the given scope.
+- **`kst self update`** — fetch latest release, verify SHA256, replace binary in place.
+- **`kst self uninstall`** — remove installed assets, data, and the binary.
+- **`kst completions <shell>`** — emit shell completion script (`bash`/`zsh`/`fish`/`powershell`).
 
-```bash
-kst init [--global] [--force]
-```
-
-| Flag       | What it does                                                                        |
-| ---------- | ----------------------------------------------------------------------------------- |
-| `--global` | Write `$XDG_CONFIG_HOME/kasetto/kasetto.yaml` (or `~/.config/kasetto/kasetto.yaml`) |
-| `--force`  | Overwrite an existing config file without asking                                    |
-
-### `kst sync`
-
-Reads the config, discovers skills, and makes the local destination match.
-
-```bash
-kst sync [--config <path-or-url>] [--dry-run] [--quiet] [--json] [--plain] [--verbose] [--project | --global]
-```
-
-| Flag        | What it does                                                                                                                                       |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--config`  | Path or HTTPS URL to a YAML config (default order: `$KASETTO_CONFIG`, saved preference, `./kasetto.yaml`, `$XDG_CONFIG_HOME/kasetto/kasetto.yaml`) |
-| `--dry-run` | Preview what would change without writing anything                                                                                                 |
-| `--quiet`   | Suppress non-error output                                                                                                                          |
-| `--json`    | Print the sync report as JSON                                                                                                                      |
-| `--plain`   | Disable colors and spinner animations                                                                                                              |
-| `--verbose` | Show per-skill action details                                                                                                                      |
-| `--project` | Install into the current project directory                                                                                                         |
-| `--global`  | Install globally (default)                                                                                                                         |
-
-Missing skills are reported as broken but won't stop the rest of the run. The exit code is non-zero only for source-level failures.
-
-### `kst list`
-
-Shows skills and MCP servers from the lock file(s). **Without** `--project` or `--global`, both scopes are merged so you can tell global and project installs apart (scope is shown per row / in JSON).
-
-```bash
-kst list [--json] [--quiet] [--plain] [--project | --global]
-```
-
-In a terminal (and without `--plain`), this opens an interactive browser — Skills and MCPs tabs with detail panes. Navigate with `j`/`k`, switch tabs with Tab or `h`/`l`, scroll with `PgUp`/`PgDn`, jump with `gg`/`G`. Use `--plain`, set `NO_TUI=1`, or pipe stdout for a plain text listing.
-
-### `kst doctor`
-
-Prints local diagnostics: version, lock file path, installation paths, last sync time, and any failed skills from the latest run.
-
-```bash
-kst doctor [--json] [--quiet] [--plain] [--project | --global]
-```
-
-### `kst clean`
-
-Removes all tracked skills and MCP configs for the given scope.
-
-```bash
-kst clean [--dry-run] [--json] [--quiet] [--plain] [--project | --global]
-```
-
-| Flag        | What it does                                               |
-| ----------- | ---------------------------------------------------------- |
-| `--dry-run` | Preview what would be removed (prints paths and MCP packs) |
-| `--json`    | Print output as JSON                                       |
-| `--quiet`   | Suppress non-error output                                  |
-| `--plain`   | Disable colors and banner-style header                     |
-| `--project` | Clean project-scoped assets                                |
-| `--global`  | Clean globally-scoped assets (default)                     |
-
-### `kst self update`
-
-Checks GitHub for the latest release, verifies the SHA256 checksum against `checksums.txt`, and replaces the current binary in-place.
-
-```bash
-kst self update [--json]
-```
-
-Kasetto also prints a one-line yellow notice at the end of any command when a newer release is available. The check runs in the background at most once every 24 hours, caches the result under `$XDG_CACHE_HOME/kasetto/update-check.json`, and is suppressed under `--json` / `--plain` / `--quiet` and when stdout is not a TTY.
-
-### `kst self uninstall`
-
-Removes installed skills, MCP configs, Kasetto data, and the binary.
-
-```bash
-kst self uninstall [--yes]
-```
-
-### `kst completions`
-
-Generates shell completion scripts.
-
-```bash
-kst completions <shell>
-```
-
-Supported shells: `bash`, `zsh`, `fish`, `powershell`.
+Most commands accept `--json`, `--plain`, `--quiet`, and `--project | --global`.
 
 ## Configuration
 
@@ -211,8 +135,7 @@ When `--config` is omitted, Kasetto looks for config in this order:
 3. `./kasetto.yaml`
 4. `$XDG_CONFIG_HOME/kasetto/kasetto.yaml` (or `~/.config/kasetto/kasetto.yaml`)
 
-Point it at a specific file or URL with `--config`, or run `kst init` for local `./kasetto.yaml` (`kst init --global` writes the global config file).
-To persist a remote URL as your default, add a `source:` key to `~/.config/kasetto/config.yaml`.
+Run `kst init` to scaffold a local config, or `kst init --global` for the global one.
 
 ```yaml
 # Choose an agent preset (single or multiple)...
@@ -265,48 +188,7 @@ mcps:
       - linear        # → mcps/linear.json
 ```
 
-| Key                | Required | Description                                                                  |
-| ------------------ | -------- | ---------------------------------------------------------------------------- |
-| `agent`            | no       | One or more [supported agent presets](#supported-agents)                     |
-| `destination`      | no       | Explicit install path - overrides `agent` if both are set                    |
-| `scope`            | no       | `"global"` (default) or `"project"` - where to install                       |
-| `skills`           | **yes**  | List of skill sources                                                        |
-| `skills[].source`  | **yes**  | Git host URL or local path                                                   |
-| `skills[].branch`  | no       | Branch for remote sources (default: `main`, falls back to `master`)          |
-| `skills[].ref`     | no       | Git tag, commit SHA, or ref (takes priority over `branch`)                   |
-| `skills[].sub-dir` | no       | Relative subdirectory to use as source root (`sub_dir` alias also supported) |
-| `skills[].skills`  | **yes**  | `"*"` for all, or a list of names / `{ name, path }` objects                 |
-| `mcps`             | no       | List of MCP server sources                                                   |
-| `mcps[].source`    | **yes**  | Git host URL or local path containing MCP config                             |
-| `mcps[].branch`    | no       | Branch for remote sources                                                    |
-| `mcps[].ref`       | no       | Git tag, commit SHA, or ref                                                  |
-| `mcps[].mcps`      | **yes**  | `"*"` to discover all, or a list of names / `{ name, path }` objects         |
-| `extends`          | no       | Path or URL of a parent config to inherit from (string or list)              |
-
-### Extending another config
-
-Use `extends` to inherit from a shared base config. Local relative paths resolve against the extending file; HTTPS URLs use the same auth env vars as `--config`.
-
-```yaml
-# child.yaml — pulls everything from the team base, then overrides
-extends: ./team-base.yaml
-scope: project
-skills:
-  - source: https://github.com/example/extra-pack
-    skills: "*"
-```
-
-Scalars (`destination`, `scope`, `agent`) replace. `skills` and `mcps` merge by `(source, ref-or-branch, sub-dir)` identity — same identity replaces, otherwise appends. So a child can narrow a parent's `skills: "*"` to a specific list, pin a different `ref`, or simply add new sources. Cycles are rejected; max chain depth is 8.
-
-`extends` accepts a list too — parents merge left-to-right, then the child overrides them all:
-
-```yaml
-extends:
-  - ./org-base.yaml
-  - https://example.com/team-overlay.yaml
-```
-
-See the [configuration docs](https://kasetto.dev/docs/configuration#extending-another-config) for the full merge-rules reference.
+Full key reference, merge rules, and `extends:` inheritance live in the [configuration docs](https://kasetto.dev/docs/configuration).
 
 ## Supported Agents
 
@@ -347,30 +229,9 @@ Don't see your agent? Use the `destination` field to point at any path.
 
 ## Private Repositories & Enterprise
 
-Set an environment variable and private sources just work — no login command, no credentials file:
+Private GitHub, GitLab, Bitbucket, Codeberg, Gitea, and self-hosted instances work via env-var tokens (`GITHUB_TOKEN`, `GITLAB_TOKEN`, `BITBUCKET_TOKEN`, `GITEA_TOKEN`, etc.) — no login command, no credentials file. The same tokens apply to remote `--config` URLs.
 
-| Host                        | Environment variable                                                                       |
-| --------------------------- | ------------------------------------------------------------------------------------------ |
-| GitHub / GitHub Enterprise  | `GITHUB_TOKEN` or `GH_TOKEN`                                                               |
-| GitLab / GitLab self-hosted | `GITLAB_TOKEN` or `CI_JOB_TOKEN`                                                           |
-| Bitbucket Cloud             | `BITBUCKET_EMAIL` + `BITBUCKET_TOKEN` (or `BITBUCKET_USERNAME` + `BITBUCKET_APP_PASSWORD`) |
-| Codeberg / Gitea / Forgejo  | `GITEA_TOKEN`, `CODEBERG_TOKEN`, or `FORGEJO_TOKEN`                                        |
-
-Kasetto auto-detects GitHub Enterprise for any hostname with an `owner/repo` path, and GitLab self-hosted when the hostname starts with `gitlab.`.
-
-```yaml
-skills:
-  # GitHub Enterprise
-  - source: https://ghe.example.com/acme/skill-pack
-    skills: "*"
-
-  # Self-hosted GitLab (nested groups supported)
-  - source: https://gitlab.example.com/team/ai/skills
-    skills:
-      - code-reviewer
-```
-
-The same tokens apply when you fetch a remote config via `--config https://...`.
+Full host table and auth resolution rules in the [authentication docs](https://kasetto.dev/docs/authentication).
 
 ## Contributing
 
