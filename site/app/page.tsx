@@ -299,7 +299,7 @@ export default async function Page() {
 
         <div className="footer-bottom">
           <span>
-            © 2026 Volodymyr Pivoshenko{" "}
+            2026 Volodymyr Pivoshenko{" "}
             <a href="mailto:contact@pivoshenko.dev" className="footer-bottom-email">
               &lt;contact@pivoshenko.dev&gt;
             </a>
