@@ -30,9 +30,7 @@ type Token = { t: string; v?: string };
 const CONFIG_LINES: Token[] = [
   { t: "cmt", v: "# inherit a shared base config — overrides merge on top" },
   { t: "nl" },
-  { t: "key", v: "extends" },
-  { t: "punct", v: ": " },
-  { t: "url", v: "github.com/acme/kasetto-base/raw/main/kasetto.yaml" },
+  { t: "cmt", v: "# extends: github.com/acme/kasetto-base/raw/main/kasetto.yaml" },
   { t: "nl" },
   { t: "nl" },
 
