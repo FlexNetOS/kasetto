@@ -1,4 +1,4 @@
-import { FaGithub, FaLinkedinIn, FaUser } from "react-icons/fa";
+import { FaGithub, FaGlobe, FaLinkedinIn } from "react-icons/fa";
 import { GoStar } from "react-icons/go";
 import { AgentsGrid } from "./components/agents-grid";
 import { CopyButton } from "./components/copy-button";
@@ -197,6 +197,14 @@ export default async function Page() {
             </p>
             <div className="footer-social">
               <a
+                href="https://www.pivoshenko.dev"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Author's blog"
+              >
+                <FaGlobe />
+              </a>
+              <a
                 href="https://github.com/pivoshenko/kasetto"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -211,14 +219,6 @@ export default async function Page() {
                 aria-label="LinkedIn"
               >
                 <FaLinkedinIn />
-              </a>
-              <a
-                href="https://www.pivoshenko.dev"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Author's blog"
-              >
-                <FaUser />
               </a>
             </div>
           </div>
