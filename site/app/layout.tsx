@@ -11,12 +11,11 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kasetto — Declarative AI Agent Environment Manager",
-  description:
-    "One YAML config. 21 agent presets. Sync AI skills from GitHub, GitLab, Bitbucket, and local directories. Written in Rust.",
+  title: "Kasetto",
+  description: "Declarative AI Agent Environment Manager written in Rust",
   openGraph: {
     title: "Kasetto",
-    description: "Declarative AI agent environment manager, written in Rust.",
+    description: "Declarative AI Agent Environment Manager written in Rust",
     url: "https://kasetto.dev",
     siteName: "Kasetto",
     type: "website",
