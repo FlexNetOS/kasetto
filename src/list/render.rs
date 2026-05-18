@@ -76,18 +76,21 @@ pub(super) fn draw(
         row += draw_compact_banner(stdout, width, row, &colors)?;
     }
 
-    // Draw tab bar
-    if tabs.len() > 1 {
-        row = draw_tab_bar(stdout, width, row, tabs, active_tab, &colors)?;
-    }
-
     let current_tab = tabs[active_tab];
-    let item_count = match current_tab {
-        Tab::Skills => input.skills.len(),
-        Tab::Mcps => input.mcps.len(),
-    };
+    let counts: Vec<usize> = tabs
+        .iter()
+        .map(|t| match t {
+            Tab::Skills => input.skills.len(),
+            Tab::Mcps => input.mcps.len(),
+        })
+        .collect();
 
-    row = draw_header(stdout, width, row, item_count, current_tab.label(), &colors)?;
+    // Draw tab bar (with counts inline)
+    if tabs.len() > 1 {
+        row = draw_tab_bar(stdout, width, row, tabs, &counts, active_tab, &colors)?;
+    } else {
+        row = draw_header(stdout, width, row, counts[active_tab], current_tab.label(), &colors)?;
+    }
 
     let footer_height = 1usize;
     let content_top = row;
@@ -313,11 +316,13 @@ fn draw_tab_bar(
     _width: usize,
     top: usize,
     tabs: &[Tab],
+    counts: &[usize],
     active: usize,
     colors: &Colors,
 ) -> Result<usize> {
     move_to(stdout, 0, top)?;
     for (i, tab) in tabs.iter().enumerate() {
+        let count = counts.get(i).copied().unwrap_or(0);
         if i == active {
             queue!(
                 stdout,
@@ -325,13 +330,15 @@ fn draw_tab_bar(
                 SetAttribute(Attribute::Bold),
                 Print(format!(" {} ", tab.label())),
                 SetAttribute(Attribute::Reset),
+                SetForegroundColor(colors.secondary),
+                Print(format!("{count} ")),
                 ResetColor
             )?;
         } else {
             queue!(
                 stdout,
                 SetForegroundColor(colors.secondary),
-                Print(format!(" {} ", tab.label())),
+                Print(format!(" {} {count} ", tab.label())),
                 ResetColor
             )?;
         }
