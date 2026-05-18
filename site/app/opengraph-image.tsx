@@ -15,7 +15,25 @@ const MAUVE = "#b89cdc";
 const ACCENT_WARM = "#d4b070";
 const TAPE = "#c4ad88";
 
-export default function OpengraphImage() {
+async function loadFont(family: string, weight: 400 | 600 | 700) {
+  const res = await fetch(
+    `https://fonts.googleapis.com/css2?family=${family.replace(/ /g, "+")}:wght@${weight}&display=swap`,
+    { headers: { "User-Agent": "Mozilla/5.0" } }
+  );
+  const css = await res.text();
+  const url = css.match(/src: url\((.+?)\) format\('(opentype|truetype)'\)/)?.[1];
+  if (!url) throw new Error(`Failed to load ${family} ${weight}`);
+  return fetch(url).then((r) => r.arrayBuffer());
+}
+
+export default async function OpengraphImage() {
+  const [regular, semibold, bold, jp] = await Promise.all([
+    loadFont("JetBrains Mono", 400),
+    loadFont("JetBrains Mono", 600),
+    loadFont("JetBrains Mono", 700),
+    loadFont("Noto Sans JP", 700),
+  ]);
+
   return new ImageResponse(
     <div
       style={{
@@ -82,9 +100,10 @@ export default function OpengraphImage() {
             fontSize: 22,
             fontWeight: 700,
             letterSpacing: "0.32em",
+            fontFamily: "Noto Sans JP",
           }}
         >
-          カセット — KASETTO
+          カセット
         </div>
         <div
           style={{
@@ -132,6 +151,14 @@ export default function OpengraphImage() {
         <span style={{ color: MUTED }}>$ curl -fsSL kasetto.dev/install | sh</span>
       </div>
     </div>,
-    { ...size }
+    {
+      ...size,
+      fonts: [
+        { name: "JetBrains Mono", data: regular, weight: 400, style: "normal" },
+        { name: "JetBrains Mono", data: semibold, weight: 600, style: "normal" },
+        { name: "JetBrains Mono", data: bold, weight: 700, style: "normal" },
+        { name: "Noto Sans JP", data: jp, weight: 700, style: "normal" },
+      ],
+    }
   );
 }
