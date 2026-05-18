@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.10.0] - 2026-05-18
+
+### Bug fixes
+
+- **tui**: Drop amber tint from banner subtitle
+
+### Documentation
+
+- Capitalize Skills in tagline
+- Streamline README install and getting started
+- Simplify README for landing-page shape
+
+### Features
+
+- **site**: Align OG image with brand title and description
+- **site**: Refine link preview metadata and OG image typography
+- **site**: Add personal blog link to footer socials
+- **site**: Show favicon mark in top nav
+
+### Refactor
+
+- **list**: Inline tab counts and drop separate header row
+- **site**: Reorder footer socials and use globe icon
+
+### Style
+
+- **site**: Polish demo snippet, footer, and docs background
+
 ## [2.9.1] - 2026-05-12
 
 ### Bug fixes
@@ -30,6 +58,10 @@ All notable changes to this project will be documented in this file.
 - **clean**: Split run into removal and report helpers
 - **tui**: Drop unused crossterm SUCCESS and WARNING consts
 - **tui**: Migrate palette to brand RGB and add Side B accent
+
+### Release
+
+- V2.9.1
 
 ### Style
 
