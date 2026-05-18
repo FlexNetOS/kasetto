@@ -107,27 +107,25 @@ export default async function OpengraphImage() {
         </div>
         <div
           style={{
-            fontSize: 76,
-            fontWeight: 600,
-            lineHeight: 1.1,
-            letterSpacing: "-0.01em",
-            maxWidth: 980,
-            display: "flex",
-            flexDirection: "column",
+            fontSize: 140,
+            fontWeight: 700,
+            lineHeight: 1,
+            letterSpacing: "-0.02em",
+            color: ACCENT_WARM,
           }}
         >
-          <span style={{ color: ACCENT_WARM }}>Declarative</span>
-          <span>AI agent environment manager.</span>
+          Kasetto
         </div>
         <div
           style={{
-            fontSize: 26,
+            fontSize: 32,
             color: MUTED,
-            letterSpacing: "0.04em",
-            maxWidth: 980,
+            letterSpacing: "0.02em",
+            maxWidth: 1040,
+            lineHeight: 1.3,
           }}
         >
-          One YAML config. 21 agents. Written in Rust.
+          Declarative AI Agent Environment Manager written in Rust
         </div>
       </div>
 
