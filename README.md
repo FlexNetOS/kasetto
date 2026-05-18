@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/pivoshenko/kasetto/actions/workflows/ci.yaml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/pivoshenko/kasetto/ci.yaml?style=flat-square&logo=github&logoColor=white&label=CI&color=0A6847"></a>
-  <img alt="Rust" src="https://img.shields.io/badge/Rust-Stable-0A6847?style=flat-square&logo=rust&logoColor=white">
+  <img alt="Rust" src="https://img.shields.io/badge/Rust-Stable-CE422B?style=flat-square&logo=rust&logoColor=white">
   <a href="https://github.com/pivoshenko/kasetto/releases"><img alt="Release" src="https://img.shields.io/github/v/release/pivoshenko/kasetto?style=flat-square&logo=github&logoColor=white&color=4856CD&label=Release"></a>
   <a href="https://github.com/pivoshenko/kasetto/blob/main/LICENSE-MIT"><img alt="License" src="https://img.shields.io/badge/License-MIT%20%7C%20Apache--2.0-0A6847?style=flat-square&logo=opensourceinitiative&logoColor=white"></a>
   <a href="https://stand-with-ukraine.pp.ua"><img alt="Stand with Ukraine" src="https://img.shields.io/badge/Stand_With-Ukraine-FFD700?style=flat-square&labelColor=0057B7"></a>
@@ -47,13 +47,6 @@ curl -fsSL kasetto.dev/install | sh
 powershell -ExecutionPolicy Bypass -c "irm kasetto.dev/install.ps1 | iex"
 ```
 
-By default the binary is placed in `~/.local/bin`. You can override this with environment variables:
-
-| Variable              | Description            | Default                                                      |
-| --------------------- | ---------------------- | ------------------------------------------------------------ |
-| `KASETTO_VERSION`     | Version tag to install | Latest release                                               |
-| `KASETTO_INSTALL_DIR` | Installation directory | `~/.local/bin` (Unix) / `%USERPROFILE%\.local\bin` (Windows) |
-
 ### Homebrew
 
 ```bash
@@ -73,16 +66,18 @@ scoop install kasetto
 cargo install kasetto
 ```
 
-### From Source
-
-```bash
-git clone https://github.com/pivoshenko/kasetto && cd kasetto
-cargo install --path .
-```
-
 ## Getting Started
 
-**1. Sync skills into your agents:**
+**1. Scaffold a config:**
+
+```bash
+kst init            # creates ./kasetto.yaml in the current directory
+kst init --global   # or a global one at ~/.config/kasetto/kasetto.yaml
+```
+
+Edit the generated `kasetto.yaml` — pick an `agent`, add a `skills:` source, and you're ready to sync.
+
+**2. Sync skills into your agents:**
 
 ```bash
 # uses ./kasetto.yaml in the current directory
@@ -104,7 +99,7 @@ That's it. Kasetto pulls the skills and installs them into the right agent direc
 
 See [pivoshenko/pivoshenko.ai](https://github.com/pivoshenko/pivoshenko.ai) for a community example pulling skills from multiple packs for Claude Code and OpenCode.
 
-**2. See what's installed:**
+**3. See what's installed:**
 
 ```bash
 kst list      # interactive browser with vim-style navigation
