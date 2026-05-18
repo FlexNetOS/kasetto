@@ -36,18 +36,11 @@ impl Drop for TuiGuard {
 /// Draw the ASCII banner starting at `top`. Returns the number of rows consumed (including spacing).
 pub(crate) fn draw_banner(stdout: &mut Stdout, top: usize) -> Result<usize> {
     let lines = banner_lines();
-    // Japanese subtitle sits at len-2 (last line is `BANNER_BOTTOM` border).
-    let subtitle_idx = lines.len().saturating_sub(2);
     for (offset, line) in lines.iter().enumerate() {
-        let color = if offset == subtitle_idx {
-            term::ACCENT_WARM
-        } else {
-            term::BANNER
-        };
         execute!(
             stdout,
             MoveTo(0, (top + offset) as u16),
-            SetForegroundColor(color),
+            SetForegroundColor(term::BANNER),
             Print(line),
             ResetColor
         )?;
