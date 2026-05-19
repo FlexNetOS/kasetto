@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.11.0] - 2026-05-19
+
+### Features
+
+- **tui**: Tint banner subtitle amber and drop star animation
+
+### Perf
+
+- **tui**: Redraw home and list browser on events only
+
 ## [2.10.0] - 2026-05-18
 
 ### Bug fixes
@@ -25,6 +35,10 @@ All notable changes to this project will be documented in this file.
 
 - **list**: Inline tab counts and drop separate header row
 - **site**: Reorder footer socials and use globe icon
+
+### Release
+
+- V2.10.0
 
 ### Style
 
