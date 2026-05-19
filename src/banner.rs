@@ -19,6 +19,20 @@ const JAPANESE_SUBTITLE: &str = "スキル・パッケージ・マネージャ�
 /// Total banner lines: top border + LOGO_LINES + empty + subtitle + bottom border.
 const BANNER_LINE_COUNT: usize = 1 + LOGO_LINES.len() + 1 + 1 + 1;
 
+/// Row index of the centered Japanese subtitle within [`banner_lines`].
+pub(crate) const SUBTITLE_ROW: usize = 1 + LOGO_LINES.len() + 1;
+
+pub(crate) fn subtitle_text() -> &'static str {
+    JAPANESE_SUBTITLE
+}
+
+/// 0-based column where the subtitle text begins (skipping the left `║` and padding).
+pub(crate) fn subtitle_column() -> u16 {
+    let width = UnicodeWidthStr::width(JAPANESE_SUBTITLE);
+    let left_pad = BANNER_INNER_WIDTH.saturating_sub(width) / 2;
+    (1 + left_pad) as u16
+}
+
 /// Screen column (0-based), row index in [`banner_lines`] (0 = top border), twinkle phase.
 pub(crate) const BANNER_STAR_CELLS: [(u16, u16, u16); 10] = [
     (3, 7, 0),

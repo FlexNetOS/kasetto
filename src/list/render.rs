@@ -1,8 +1,7 @@
 use std::cmp::{max, min};
 use std::io::{Stdout, Write};
-use std::time::Duration;
 
-use crossterm::cursor::{position, MoveTo};
+use crossterm::cursor::MoveTo;
 use crossterm::queue;
 use crossterm::style::{
     Attribute, Color, Print, ResetColor, SetAttribute, SetBackgroundColor, SetForegroundColor,
@@ -11,11 +10,10 @@ use crossterm::terminal::size;
 use crossterm::terminal::{Clear, ClearType};
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
-use crate::banner::{banner_lines, banner_width};
+use crate::banner::{banner_lines, banner_width, subtitle_column, subtitle_text, SUBTITLE_ROW};
 use crate::colors::term;
 use crate::error::Result;
 use crate::model::{InstalledSkill, Scope};
-use crate::tui::draw_stars;
 
 use super::session::{ListState, PaneRect};
 use super::tab::Tab;
@@ -44,7 +42,6 @@ pub(super) fn draw(
     state: &mut ListState,
     tabs: &[Tab],
     active_tab: usize,
-    elapsed: Duration,
     plain: bool,
 ) -> Result<()> {
     let (width, height) = size()?;
@@ -65,12 +62,8 @@ pub(super) fn draw(
     if show_ascii_banner {
         move_to(stdout, 0, 0)?;
         stdout.flush()?;
-        let (_, banner_origin_y) = position()?;
         let banner_h = draw_banner(stdout, width, 0, &colors)?;
         stdout.flush()?;
-        if panel_height >= 22 {
-            draw_stars(stdout, elapsed, banner_origin_y)?;
-        }
         row += banner_h;
     } else {
         row += draw_compact_banner(stdout, width, row, &colors)?;
@@ -89,7 +82,14 @@ pub(super) fn draw(
     if tabs.len() > 1 {
         row = draw_tab_bar(stdout, width, row, tabs, &counts, active_tab, &colors)?;
     } else {
-        row = draw_header(stdout, width, row, counts[active_tab], current_tab.label(), &colors)?;
+        row = draw_header(
+            stdout,
+            width,
+            row,
+            counts[active_tab],
+            current_tab.label(),
+            &colors,
+        )?;
     }
 
     let footer_height = 1usize;
@@ -286,6 +286,13 @@ fn draw_banner(stdout: &mut Stdout, width: usize, top: usize, colors: &Colors) -
                 ResetColor
             )?;
         }
+        move_to(stdout, subtitle_column() as usize, top + SUBTITLE_ROW)?;
+        queue!(
+            stdout,
+            SetForegroundColor(colors.subtitle),
+            Print(subtitle_text()),
+            ResetColor
+        )?;
         Ok(lines.len() + 1)
     } else {
         write_line(stdout, 0, top, width, "kasetto", colors, Style::Title)?;
@@ -782,6 +789,7 @@ impl Line {
 
 struct Colors {
     banner: Color,
+    subtitle: Color,
     accent: Color,
     border: Color,
     text: Color,
@@ -794,6 +802,7 @@ impl Colors {
         if plain || std::env::var_os("NO_COLOR").is_some() {
             Self {
                 banner: term::TEXT,
+                subtitle: term::TEXT,
                 accent: term::TEXT,
                 border: term::TEXT,
                 text: term::TEXT,
@@ -803,6 +812,7 @@ impl Colors {
         } else {
             Self {
                 banner: term::BANNER,
+                subtitle: term::ACCENT_WARM,
                 accent: term::ACCENT,
                 border: term::SECONDARY,
                 text: term::TEXT,
