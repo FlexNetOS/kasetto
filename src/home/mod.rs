@@ -3,7 +3,6 @@
 mod prompt;
 
 use std::io::{stdout, IsTerminal, Stdout, Write};
-use std::time::{Duration, Instant};
 
 use crossterm::cursor::MoveTo;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
@@ -11,11 +10,10 @@ use crossterm::execute;
 use crossterm::style::{Attribute, Print, ResetColor, SetAttribute, SetForegroundColor};
 use crossterm::terminal::{self, Clear, ClearType};
 
-use crate::banner::banner_width;
 use crate::cli::SyncArgs;
 use crate::colors::term;
 use crate::error::Result;
-use crate::tui::{draw_banner_or_fallback, draw_stars, TuiGuard};
+use crate::tui::{draw_banner_or_fallback, TuiGuard};
 
 use prompt::prompt_sync_args;
 
@@ -130,20 +128,18 @@ const HOME_ITEMS: [HomeItem; 7] = [
 
 fn browse(program_name: &str, default_config: &str) -> Result<HomeAction> {
     let mut guard = TuiGuard::enter()?;
-    let started = Instant::now();
     let mut selected = 0usize;
+    let mut dirty = true;
 
     loop {
-        draw(
-            &mut guard.stdout,
-            selected,
-            started.elapsed(),
-            program_name,
-            default_config,
-        )?;
-        if event::poll(Duration::from_millis(120))? {
-            match event::read()? {
-                Event::Key(key) if key.kind != KeyEventKind::Release => match key.code {
+        if dirty {
+            draw(&mut guard.stdout, selected, program_name, default_config)?;
+            dirty = false;
+        }
+        match event::read()? {
+            Event::Key(key) if key.kind != KeyEventKind::Release => {
+                dirty = true;
+                match key.code {
                     KeyCode::Up | KeyCode::Char('k') => {
                         selected = selected.saturating_sub(1);
                     }
@@ -179,10 +175,10 @@ fn browse(program_name: &str, default_config: &str) -> Result<HomeAction> {
                     }
                     KeyCode::Char('q') | KeyCode::Esc => return Ok(HomeAction::Quit),
                     _ => {}
-                },
-                Event::Resize(_, _) => {}
-                _ => {}
+                }
             }
+            Event::Resize(_, _) => dirty = true,
+            _ => {}
         }
     }
 }
@@ -190,7 +186,6 @@ fn browse(program_name: &str, default_config: &str) -> Result<HomeAction> {
 fn draw(
     stdout: &mut Stdout,
     selected: usize,
-    elapsed: Duration,
     program_name: &str,
     _default_config: &str,
 ) -> Result<()> {
@@ -201,9 +196,6 @@ fn draw(
 
     let title = format!("{program_name} | カセット");
     let mut row = draw_banner_or_fallback(stdout, &title, width, height, 0)?;
-    if width >= banner_width() && height >= 22 {
-        draw_stars(stdout, elapsed, 0)?;
-    }
 
     for (index, item) in HOME_ITEMS.iter().enumerate() {
         if (row as usize) >= height.saturating_sub(3) {
