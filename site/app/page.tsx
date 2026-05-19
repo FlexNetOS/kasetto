@@ -221,6 +221,17 @@ export default async function Page() {
                 <FaLinkedinIn />
               </a>
             </div>
+            <a
+              href="https://backlinklog.com/listing/kasetto.dev?utm_source=backlinklog&utm_medium=badge"
+              className="footer-badge"
+            >
+              <img
+                src="https://backlinklog.com/badge/kasetto.dev.svg"
+                alt="Listed on BacklinkLog"
+                width={160}
+                height={40}
+              />
+            </a>
           </div>
 
           <div className="footer-col">
@@ -312,17 +323,6 @@ export default async function Page() {
               &lt;contact@pivoshenko.dev&gt;
             </a>
           </span>
-          <a
-            href="https://backlinklog.com/listing/kasetto.dev?utm_source=backlinklog&utm_medium=badge"
-            className="footer-bottom-badge"
-          >
-            <img
-              src="https://backlinklog.com/badge/kasetto.dev.svg"
-              alt="Listed on BacklinkLog"
-              width={160}
-              height={40}
-            />
-          </a>
           <span className="footer-bottom-meta">MIT • Apache 2.0</span>
         </div>
       </footer>

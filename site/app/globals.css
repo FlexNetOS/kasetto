@@ -1404,6 +1404,16 @@ button:focus-visible,
   background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
+.footer-badge {
+  display: inline-block;
+  margin-top: var(--space-4);
+  opacity: 0.85;
+  transition: opacity 0.12s;
+}
+.footer-badge:hover {
+  opacity: 1;
+}
+
 .footer-col-title {
   font-size: var(--fs-xs);
   font-weight: 700;
