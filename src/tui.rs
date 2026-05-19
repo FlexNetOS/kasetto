@@ -1,5 +1,4 @@
 use std::io::{stdout, Stdout};
-use std::time::Duration;
 
 use crossterm::cursor::{Hide, MoveTo, Show};
 use crossterm::execute;
@@ -8,7 +7,7 @@ use crossterm::terminal::{
     disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
 };
 
-use crate::banner::{banner_lines, banner_width, BANNER_STAR_CELLS};
+use crate::banner::{banner_lines, banner_width, subtitle_column, subtitle_text, SUBTITLE_ROW};
 use crate::colors::term;
 use crate::error::Result;
 
@@ -45,34 +44,14 @@ pub(crate) fn draw_banner(stdout: &mut Stdout, top: usize) -> Result<usize> {
             ResetColor
         )?;
     }
+    execute!(
+        stdout,
+        MoveTo(subtitle_column(), (top + SUBTITLE_ROW) as u16),
+        SetForegroundColor(term::ACCENT_WARM),
+        Print(subtitle_text()),
+        ResetColor
+    )?;
     Ok(lines.len() + 1)
-}
-
-/// Twinkling stars on the banner's empty + subtitle rows. `banner_origin_y` is the terminal row
-/// where banner line 0 starts (use `0` on the home alternate screen).
-pub(crate) fn draw_stars(
-    stdout: &mut Stdout,
-    elapsed: Duration,
-    banner_origin_y: u16,
-) -> Result<()> {
-    let star_chars = [' ', '·', '✧', '✦', '✧', '·'];
-    let tick = (elapsed.as_millis() / 200) as u16;
-    for &(col, row, phase) in &BANNER_STAR_CELLS {
-        let idx = ((tick + phase) as usize) % star_chars.len();
-        let ch = star_chars[idx];
-        if ch == ' ' {
-            continue;
-        }
-        let y = banner_origin_y.saturating_add(row);
-        execute!(
-            stdout,
-            MoveTo(col, y),
-            SetForegroundColor(term::BANNER),
-            Print(ch),
-            ResetColor
-        )?;
-    }
-    Ok(())
 }
 
 /// Draw the ASCII banner if the terminal is wide/tall enough, otherwise a compact title.
@@ -86,9 +65,6 @@ pub(crate) fn draw_banner_or_fallback(
 ) -> Result<u16> {
     if width >= banner_width() && height >= 18 {
         let row = draw_banner(stdout, top as usize)? as u16;
-        if height >= 22 {
-            draw_stars(stdout, std::time::Duration::ZERO, top)?;
-        }
         Ok(row)
     } else {
         execute!(
