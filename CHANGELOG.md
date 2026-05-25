@@ -2,11 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [2.12.0] - 2026-05-25
 
-### Added
+### Bug fixes
 
-- Sync user-defined slash commands across supported agents
+- **site**: Move pnpm onlyBuiltDependencies to workspace file
+
+### Documentation
+
+- Use namespaced command names in config examples
+- **site**: Rework feature cards, hero, and agent order
+- Refine copy, terminology, and accuracy
+- **site**: Surface slash commands as third asset kind
+- **site**: Move backlinklog badge under footer social icons
+- **site**: Add backlinklog badge to footer
+- Reorder readme badges
+- Add backlinklog badge and tweak rust badge color
+- Describe github workflows in CLAUDE.md
+
+### Features
+
+- **site**: Add light theme with toggle
+- **site**: Add single-source config example sync
+- **sync**: Add slash commands as third asset kind
+
+### Refactor
+
+- **site**: Sort imports
+
+### Build
+
+- **deps**: Add next-themes
+- **deps**: Update dependencies
 
 ## [2.11.0] - 2026-05-19
 
@@ -17,6 +44,10 @@ All notable changes to this project will be documented in this file.
 ### Perf
 
 - **tui**: Redraw home and list browser on events only
+
+### Release
+
+- V2.11.0
 
 ## [2.10.0] - 2026-05-18
 
