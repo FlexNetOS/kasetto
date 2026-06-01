@@ -18,9 +18,7 @@
   A declarative AI agent environment manager, written in Rust.
 </p>
 
-<p align="center">
-  <img alt="kasetto sync output" src="assets/demo.svg" width="50%" />
-</p>
+<img alt="kasetto sync output" src="assets/demo.svg" width="100%" />
 
 **About the name**
 
