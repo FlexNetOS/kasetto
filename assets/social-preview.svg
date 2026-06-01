@@ -9,7 +9,7 @@
     rsvg-convert -w 1280 -h 640 assets/social-preview.svg -o assets/social-preview.png
   Upload the PNG under Settings → Social preview on GitHub.
 -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640" font-family="ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'DejaVu Sans Mono',monospace">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640" font-family="'JetBrainsMono Nerd Font Mono','JetBrainsMono NFM','Iosevka Nerd Font Mono',ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace">
   <!-- background -->
   <rect x="0" y="0" width="1280" height="640" fill="#1f1f1e"/>
 
@@ -25,27 +25,31 @@
   <circle cx="114" cy="64" r="6" fill="#373634"/>
   <text x="144" y="69" fill="#6e6759" font-size="15" letter-spacing="0.08em">~/dev/kasetto · kasetto.dev</text>
 
-  <!-- KASETTO wordmark (big, popil lavender) -->
-  <text x="640" y="270" text-anchor="middle" fill="#b89cdc" font-size="180" font-weight="700" letter-spacing="0.04em">kasetto</text>
-
-  <!-- accent underline -->
-  <rect x="540" y="296" width="200" height="3" rx="1.5" fill="#d4b070" opacity="0.85"/>
+  <!-- ASCII wordmark — matches logo.svg typography. Left-anchored tspans so spaces inside box-drawing strings are preserved. -->
+  <text x="140" y="180" fill="#b89cdc" font-size="30" font-weight="700" xml:space="preserve">
+    <tspan x="140" dy="0">██╗  ██╗ █████╗ ███████╗███████╗████████╗████████╗ ██████╗</tspan>
+    <tspan x="140" dy="34">██║ ██╔╝██╔══██╗██╔════╝██╔════╝╚══██╔══╝╚══██╔══╝██╔═══██╗</tspan>
+    <tspan x="140" dy="34">█████╔╝ ███████║███████╗█████╗     ██║      ██║   ██║   ██║</tspan>
+    <tspan x="140" dy="34">██╔═██╗ ██╔══██║╚════██║██╔══╝     ██║      ██║   ██║   ██║</tspan>
+    <tspan x="140" dy="34">██║  ██╗██║  ██║███████║███████╗   ██║      ██║   ╚██████╔╝</tspan>
+    <tspan x="140" dy="34">╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝   ╚═╝      ╚═╝    ╚═════╝</tspan>
+  </text>
 
   <!-- tagline -->
-  <text x="640" y="368" text-anchor="middle" fill="#e4e2de" font-size="30" letter-spacing="0.01em" xml:space="preserve">
+  <text x="640" y="450" text-anchor="middle" fill="#e4e2de" font-size="26" letter-spacing="0.01em" xml:space="preserve">
     <tspan fill="#a8a195">A declarative </tspan><tspan fill="#e4e2de">AI agent environment manager</tspan><tspan fill="#a8a195">, written in </tspan><tspan fill="#e8a94d">Rust</tspan><tspan fill="#a8a195">.</tspan>
   </text>
 
   <!-- prompt + command -->
-  <text x="640" y="446" text-anchor="middle" font-size="28" xml:space="preserve">
+  <text x="640" y="500" text-anchor="middle" font-size="24" xml:space="preserve">
     <tspan fill="#e8a94d">❯</tspan><tspan fill="#e4e2de"> kasetto </tspan><tspan fill="#e8a94d">sync</tspan>
   </text>
 
   <!-- chip strip totals -->
-  <text x="640" y="510" text-anchor="middle" font-size="22" xml:space="preserve">
+  <text x="640" y="546" text-anchor="middle" font-size="20" xml:space="preserve">
     <tspan fill="#e8a94d">●</tspan><tspan fill="#e4e2de"> 4 </tspan><tspan fill="#e8a94d">updated</tspan><tspan fill="#a8a195">    </tspan><tspan fill="#84c578">●</tspan><tspan fill="#e4e2de"> 2 </tspan><tspan fill="#84c578">added</tspan><tspan fill="#a8a195">    </tspan><tspan fill="#e87e6c">●</tspan><tspan fill="#e4e2de"> 1 </tspan><tspan fill="#e87e6c">removed</tspan><tspan fill="#a8a195">    </tspan><tspan fill="#6e6759">●</tspan><tspan fill="#e4e2de"> 11 </tspan><tspan fill="#a8a195">unchanged</tspan>
   </text>
 
   <!-- Japanese subtitle, popil yellow -->
-  <text x="640" y="570" text-anchor="middle" fill="#d4b070" font-size="18" letter-spacing="0.4em" font-family="'Noto Sans Mono CJK JP','Noto Sans JP','Yu Gothic',sans-serif">スキル・パッケージ・マネージャー</text>
+  <text x="640" y="585" text-anchor="middle" fill="#d4b070" font-size="14" letter-spacing="0.4em" font-family="'Noto Sans Mono CJK JP','Noto Sans JP','Yu Gothic',sans-serif">スキル・パッケージ・マネージャー</text>
 </svg>
