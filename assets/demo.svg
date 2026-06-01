@@ -41,16 +41,16 @@
     <text x="20" y="92" opacity="0"><tspan fill="#84c578">✓</tspan> <tspan fill="#6cbfd3">github.com/pivoshenko/pivoshenko.ai</tspan>
       <animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.100;0.114;0.93;1" dur="7s" repeatCount="indefinite"/>
     </text>
-    <text x="20" y="104" opacity="0"><tspan fill="#6e6759">  ├─ </tspan><tspan fill="#e8a94d">↑</tspan> <tspan fill="#e4e2de">git-commit</tspan><tspan fill="#a8a195">              updated</tspan>
+    <text x="20" y="104" opacity="0"><tspan fill="#6e6759">  ├─ </tspan><tspan fill="#e8a94d">↑</tspan> <tspan fill="#e4e2de">git-commit</tspan><tspan fill="#a8a195">              </tspan><tspan fill="#e8a94d">updated</tspan>
       <animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.111;0.125;0.93;1" dur="7s" repeatCount="indefinite"/>
     </text>
-    <text x="20" y="115" opacity="0"><tspan fill="#6e6759">  ├─ </tspan><tspan fill="#e8a94d">↑</tspan> <tspan fill="#e4e2de">git-pr-create</tspan><tspan fill="#a8a195">           updated</tspan>
+    <text x="20" y="115" opacity="0"><tspan fill="#6e6759">  ├─ </tspan><tspan fill="#e8a94d">↑</tspan> <tspan fill="#e4e2de">git-pr-create</tspan><tspan fill="#a8a195">           </tspan><tspan fill="#e8a94d">updated</tspan>
       <animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.123;0.137;0.93;1" dur="7s" repeatCount="indefinite"/>
     </text>
-    <text x="20" y="126" opacity="0"><tspan fill="#6e6759">  ├─ </tspan><tspan fill="#e8a94d">↑</tspan> <tspan fill="#e4e2de">pivoshenko-brand</tspan><tspan fill="#a8a195">        updated</tspan>
+    <text x="20" y="126" opacity="0"><tspan fill="#6e6759">  ├─ </tspan><tspan fill="#e8a94d">↑</tspan> <tspan fill="#e4e2de">pivoshenko-brand</tspan><tspan fill="#a8a195">        </tspan><tspan fill="#e8a94d">updated</tspan>
       <animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.134;0.149;0.93;1" dur="7s" repeatCount="indefinite"/>
     </text>
-    <text x="20" y="137" opacity="0"><tspan fill="#6e6759">  ├─ </tspan><tspan fill="#84c578">+</tspan> <tspan fill="#e4e2de">command:gsd</tspan><tspan fill="#a8a195">             added</tspan>
+    <text x="20" y="137" opacity="0"><tspan fill="#6e6759">  ├─ </tspan><tspan fill="#84c578">+</tspan> <tspan fill="#e4e2de">command:gsd</tspan><tspan fill="#a8a195">             </tspan><tspan fill="#84c578">added</tspan>
       <animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.146;0.160;0.93;1" dur="7s" repeatCount="indefinite"/>
     </text>
     <text x="20" y="148" opacity="0"><tspan fill="#6e6759">  ├─ </tspan><tspan fill="#84c578">✓</tspan> <tspan fill="#e4e2de">git-branch-create</tspan><tspan fill="#a8a195">       unchanged</tspan>
@@ -96,7 +96,7 @@
     <text x="20" y="286" opacity="0"><tspan fill="#6e6759">  ├─ </tspan><tspan fill="#84c578">✓</tspan> <tspan fill="#e4e2de">deploy-to-vercel</tspan><tspan fill="#a8a195">        unchanged</tspan>
       <animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.311;0.326;0.93;1" dur="7s" repeatCount="indefinite"/>
     </text>
-    <text x="20" y="297" opacity="0"><tspan fill="#6e6759">  └─ </tspan><tspan fill="#e8a94d">↑</tspan> <tspan fill="#e4e2de">web-design-guidelines</tspan><tspan fill="#a8a195">   updated</tspan>
+    <text x="20" y="297" opacity="0"><tspan fill="#6e6759">  └─ </tspan><tspan fill="#e8a94d">↑</tspan> <tspan fill="#e4e2de">web-design-guidelines</tspan><tspan fill="#a8a195">   </tspan><tspan fill="#e8a94d">updated</tspan>
       <animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.323;0.337;0.93;1" dur="7s" repeatCount="indefinite"/>
     </text>
 
@@ -104,7 +104,7 @@
     <text x="20" y="311" opacity="0"><tspan fill="#84c578">✓</tspan> <tspan fill="#6cbfd3">github.com/apollographql/skills</tspan>
       <animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.343;0.357;0.93;1" dur="7s" repeatCount="indefinite"/>
     </text>
-    <text x="20" y="322" opacity="0"><tspan fill="#6e6759">  └─ </tspan><tspan fill="#84c578">+</tspan> <tspan fill="#e4e2de">rust-best-practices</tspan><tspan fill="#a8a195">     added</tspan>
+    <text x="20" y="322" opacity="0"><tspan fill="#6e6759">  └─ </tspan><tspan fill="#84c578">+</tspan> <tspan fill="#e4e2de">rust-best-practices</tspan><tspan fill="#a8a195">     </tspan><tspan fill="#84c578">added</tspan>
       <animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.354;0.369;0.93;1" dur="7s" repeatCount="indefinite"/>
     </text>
 
@@ -112,7 +112,7 @@
     <text x="20" y="336" opacity="0"><tspan fill="#84c578">✓</tspan> <tspan fill="#6cbfd3">github.com/mattpocock/skills</tspan>
       <animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.371;0.386;0.93;1" dur="7s" repeatCount="indefinite"/>
     </text>
-    <text x="20" y="347" opacity="0"><tspan fill="#6e6759">  └─ </tspan><tspan fill="#e87e6c">−</tspan> <tspan fill="#e4e2de">grill-me</tspan><tspan fill="#a8a195">                removed</tspan>
+    <text x="20" y="347" opacity="0"><tspan fill="#6e6759">  └─ </tspan><tspan fill="#e87e6c">−</tspan> <tspan fill="#e4e2de">grill-me</tspan><tspan fill="#a8a195">                </tspan><tspan fill="#e87e6c">removed</tspan>
       <animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.383;0.397;0.93;1" dur="7s" repeatCount="indefinite"/>
     </text>
 
