@@ -5,15 +5,14 @@ export const alt = "Kasetto — Declarative AI agent environment manager";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-// Brand tokens (sRGB fallbacks; ImageResponse renders in sRGB)
-const BG = "#0a0908";
-const FG = "#ebe8e2";
-const MUTED = "#a8a5a0";
-const BORDER = "#232220";
-const MAUVE = "#b89cdc";
-// Side B accent — amber (`--accent-warm` in `app/globals.css`).
-const ACCENT_WARM = "#d4b070";
-const TAPE = "#c4ad88";
+// Brand tokens — mirror the canonical palette in `src/colors.rs` (CLI is the
+// source of truth) and the popil surfaces in `app/globals.css`. Update both
+// when this changes.
+const BG = "#1f1f1e"; // popil base
+const FG = "#e4e2de"; // popil text
+const MUTED = "#a8a195"; // CLI SECONDARY
+const BORDER = "#2e2e2c"; // popil surface1
+const ACCENT_WARM = "#e8a94d"; // CLI ATTENTION
 
 async function loadFont(family: string, weight: 400 | 600 | 700) {
   const res = await fetch(
@@ -58,37 +57,10 @@ export default async function OpengraphImage() {
         }}
       />
 
-      {/* Side A tag */}
-      <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-        <div
-          style={{
-            padding: "8px 14px",
-            border: `1px solid ${MAUVE}`,
-            color: MAUVE,
-            fontSize: 22,
-            fontWeight: 700,
-            letterSpacing: "0.32em",
-          }}
-        >
-          SIDE A
-        </div>
-        <div style={{ flex: 1, height: 1, background: BORDER }} />
-        <div
-          style={{
-            color: MUTED,
-            fontSize: 18,
-            letterSpacing: "0.28em",
-            fontWeight: 600,
-          }}
-        >
-          TRACK 01 · OVERVIEW
-        </div>
-      </div>
-
       {/* Title block */}
       <div
         style={{
-          marginTop: 72,
+          marginTop: 48,
           display: "flex",
           flexDirection: "column",
           gap: 24,
@@ -142,7 +114,7 @@ export default async function OpengraphImage() {
           fontSize: 20,
           letterSpacing: "0.24em",
           fontWeight: 600,
-          color: TAPE,
+          color: ACCENT_WARM,
         }}
       >
         <span>KASETTO.DEV</span>

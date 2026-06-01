@@ -1,5 +1,10 @@
 import { FaGithub } from "react-icons/fa";
-import { GoStar } from "react-icons/go";
+import { GoStar, GoTag } from "react-icons/go";
+
+async function getRepoMeta(): Promise<{ stars: string | null; version: string | null }> {
+  const [stars, version] = await Promise.all([getStars(), getLatestRelease()]);
+  return { stars, version };
+}
 
 async function getStars(): Promise<string | null> {
   try {
@@ -15,8 +20,22 @@ async function getStars(): Promise<string | null> {
   }
 }
 
+async function getLatestRelease(): Promise<string | null> {
+  try {
+    const res = await fetch(
+      "https://api.github.com/repos/pivoshenko/kasetto/releases/latest",
+      { next: { revalidate: 3600 } },
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as { tag_name?: string };
+    return data.tag_name ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function TopNav() {
-  const stars = await getStars();
+  const { stars, version } = await getRepoMeta();
 
   return (
     <nav className="top-nav">
@@ -44,6 +63,11 @@ export async function TopNav() {
             {stars && (
               <span className="top-nav-stars">
                 <GoStar aria-hidden /> {stars}
+              </span>
+            )}
+            {version && (
+              <span className="top-nav-version">
+                <GoTag aria-hidden /> {version}
               </span>
             )}
           </a>
