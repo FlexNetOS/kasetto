@@ -861,6 +861,13 @@ button {
   color: var(--accent-warm);
   font-weight: 700;
 }
+.top-nav-version {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--fg-muted);
+  font-weight: 500;
+}
 @media (max-width: 640px) {
   .top-nav-repo-name {
     display: none;
