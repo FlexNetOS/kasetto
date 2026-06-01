@@ -2,6 +2,84 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.0] - 2026-06-01
+
+### Bug fixes
+
+- **sync**: Refetch when the configured ref or branch changes
+- **sync**: Defer stale-removal when any source failed
+- **lock**: Stamp current schema version when saving
+
+### CI/CD
+
+- **site**: Pin postcss>=8.5.10 to clear GHSA-qx2v-qp2m-jg93
+- **site**: AllowBuilds true for esbuild and sharp
+- **site**: Allowlist build scripts via pnpm-workspace.yaml
+- Point pnpm/action-setup at site/package.json
+- **site**: Declare packageManager and node engine in site package.json
+- Split workflow into rs and next jobs with audit
+
+### Documentation
+
+- **site**: Mirror sync -v run-length grouping in hero terminal
+- **site**: Align hero terminal with new uv-style sync output
+- Align with cargo + uv CLI-only direction
+- Sync CLAUDE.md with justfile and ci updates
+- **github**: Simplify pull request template
+- **ci**: Document required secrets at top of workflow files
+- Document the lockfile contract
+
+### Features
+
+- **site**: Replace fumadocs callout with kasetto-styled component
+- **ui**: Add eprint_warn and eprint_error stderr prefixes
+- **sync**: Plumb -v / -vv verbosity levels through sync
+- **ui**: Add tip: prefix helper and use in empty kst list
+- **cli**: Add --color flag and deprecate --plain
+- **sync**: Uv-style past-tense summary with elapsed timing
+- **cli**: Count-action -q and -v for verbosity granularity
+- **config**: Prefer local kasetto.yaml over preferences source
+- **site**: Expand opengraph and twitter metadata
+- **sync**: Make kasetto.lock authoritative with --update and --locked
+- **lock**: Make kasetto.lock portable and commit-friendly
+
+### Miscellaneous
+
+- **site**: Reformat chip strip after fragment removal
+- **github**: Remove issue templates
+- **site**: Rename package to kasetto 1.0.0 and bump biome
+- **justfile**: Rename site recipes to next and add install/audit
+
+### Refactor
+
+- **site**: Align palette and hero terminal mock with CLI
+- **site**: Drop theme toggle, commit to dark-only
+- **cli**: Unify section header grammar across commands
+- **src**: Consolidate sync cleanup, split fsops, drop dead code
+- **cli**: Reduce palette to 7 semantic roles, standardize verb headers
+- **init**: Tighten next-steps prose
+- **clean**: Adopt sync's glyph + summary pattern
+- **list**: Short source URLs and unify with sync formatting
+- **sync**: Run-length-group source URL on per-row labels
+- **sync**: Drop per-row green verb, color glyph only
+- **doctor**: Bold-aligned panels and grouped sections
+- **colors**: Drop popil truecolor for operational ANSI 16-color
+- **output**: Drop ✓/✗ symbols for uv-style past-tense lines
+- **output**: Adopt uv prefixes for errors and field labels
+- **sync**: Drop status-chip backgrounds for uv prefix glyphs
+- **colors**: Centralize color-stdout gating in ui
+- **colors**: Adopt popil palette as kasetto's color anchor
+- **cli**: Show banner only on help and init
+- **list**: Replace interactive browser with uv-style tables
+- **cli**: Drop interactive home screen for bare invocation
+- Apply formatter to sync modules
+- Tighten clippy lints, drop dead code, document internals
+
+### Build
+
+- Drop crossterm dependency and TUI scaffolding
+- **deps**: Update cargo lockfile
+
 ## [2.12.0] - 2026-05-25
 
 ### Bug fixes
@@ -34,6 +112,10 @@ All notable changes to this project will be documented in this file.
 
 - **deps**: Add next-themes
 - **deps**: Update dependencies
+
+### Release
+
+- V2.12.0
 
 ## [2.11.0] - 2026-05-19
 
