@@ -78,8 +78,9 @@ Next.js 15 App Router project that hosts both the marketing landing (`/`) and th
 
 ## GitHub Workflows (`.github/workflows/`)
 
-All three workflows expose `workflow_dispatch` so they can be triggered manually with `gh workflow run <name>.yaml --ref main`.
+All four workflows expose `workflow_dispatch` so they can be triggered manually with `gh workflow run <name>.yaml --ref main`.
 
 - **`ci.yaml`** — runs on push to `main` and on every PR. Two parallel `ubuntu-latest` jobs: `ci-rs` (`just lint-rs` → `just audit-rs` → `just test` → `just build-rs`) and `ci-next` (pnpm install → `pnpm lint` → `pnpm audit` → `pnpm build` in `site/`).
 - **`release.yaml`** — manual dispatch only. Optional `version` input; otherwise `git-cliff --bumped-version` derives the next version from conventional commits. Pipeline: `tag` (bump `Cargo.toml` + `Cargo.lock`, regenerate `CHANGELOG.md` via `git-cliff`, commit as `release: vX.Y.Z`, tag, push) → `build` (matrix across 6 targets: linux/macos/windows × x86_64/aarch64; cross-compiles aarch64 linux with `gcc-aarch64-linux-gnu`) → `release` (sha256 `checksums.txt`, GitHub Release with `--latest --strip header` changelog body) → `publish-crate` (`cargo publish`, needs `CARGO_REGISTRY_TOKEN`) + `update-homebrew` (regenerates `Formula/kasetto.rb` in `pivoshenko/homebrew-tap`, needs `HOMEBREW_TAP_TOKEN`) + `update-scoop` (regenerates `kasetto.json` in `pivoshenko/scoop-bucket`, needs `SCOOP_BUCKET_TOKEN`).
+- **`site.yaml`** — manual dispatch only. Runs `npx vercel deploy --prod --yes` against the Vercel project. Needs `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_SITE_PROJECT_ID`. Not coupled to `release.yaml` — site ships independently of the CLI.
 - **`labels.yaml`** — auto-syncs GitHub labels via `crazy-max/ghaction-github-labeler` whenever `.github/labels.yaml` or the workflow itself changes on `main`. Needs `GH_TOKEN`.
