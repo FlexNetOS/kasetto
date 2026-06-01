@@ -13,43 +13,34 @@
   <!-- background -->
   <rect x="0" y="0" width="1280" height="640" fill="#1f1f1e"/>
 
-  <!-- terminal frame outline -->
+  <!-- outline border -->
   <rect x="40" y="40" width="1200" height="560" rx="16" ry="16" fill="none" stroke="#b89cdc" stroke-width="2" opacity="0.4"/>
 
-  <!-- terminal header bar -->
-  <rect x="40" y="40" width="1200" height="48" rx="16" ry="16" fill="#1a1a19"/>
-  <rect x="40" y="72" width="1200" height="16" fill="#1a1a19"/>
-  <line x1="40" y1="88" x2="1240" y2="88" stroke="#2e2e2c" stroke-width="1"/>
-  <circle cx="74" cy="64" r="6" fill="#373634"/>
-  <circle cx="94" cy="64" r="6" fill="#373634"/>
-  <circle cx="114" cy="64" r="6" fill="#373634"/>
-  <text x="144" y="69" fill="#6e6759" font-size="15" letter-spacing="0.08em">~/dev/kasetto · kasetto.dev</text>
-
-  <!-- ASCII wordmark — matches logo.svg typography. Left-anchored tspans so spaces inside box-drawing strings are preserved. -->
-  <text x="140" y="180" fill="#b89cdc" font-size="30" font-weight="700" xml:space="preserve">
-    <tspan x="140" dy="0">██╗  ██╗ █████╗ ███████╗███████╗████████╗████████╗ ██████╗</tspan>
-    <tspan x="140" dy="34">██║ ██╔╝██╔══██╗██╔════╝██╔════╝╚══██╔══╝╚══██╔══╝██╔═══██╗</tspan>
-    <tspan x="140" dy="34">█████╔╝ ███████║███████╗█████╗     ██║      ██║   ██║   ██║</tspan>
-    <tspan x="140" dy="34">██╔═██╗ ██╔══██║╚════██║██╔══╝     ██║      ██║   ██║   ██║</tspan>
-    <tspan x="140" dy="34">██║  ██╗██║  ██║███████║███████╗   ██║      ██║   ╚██████╔╝</tspan>
-    <tspan x="140" dy="34">╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝   ╚═╝      ╚═╝    ╚═════╝</tspan>
+  <!-- ASCII wordmark — centered around x=640. ~17.2px advance per char × 59 chars ≈ 1015px wide at font-size 30, so start x ≈ 132. -->
+  <text x="132" y="220" fill="#b89cdc" font-size="30" font-weight="700" xml:space="preserve">
+    <tspan x="132" dy="0">██╗  ██╗ █████╗ ███████╗███████╗████████╗████████╗ ██████╗</tspan>
+    <tspan x="132" dy="34">██║ ██╔╝██╔══██╗██╔════╝██╔════╝╚══██╔══╝╚══██╔══╝██╔═══██╗</tspan>
+    <tspan x="132" dy="34">█████╔╝ ███████║███████╗█████╗     ██║      ██║   ██║   ██║</tspan>
+    <tspan x="132" dy="34">██╔═██╗ ██╔══██║╚════██║██╔══╝     ██║      ██║   ██║   ██║</tspan>
+    <tspan x="132" dy="34">██║  ██╗██║  ██║███████║███████╗   ██║      ██║   ╚██████╔╝</tspan>
+    <tspan x="132" dy="34">╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝   ╚═╝      ╚═╝    ╚═════╝</tspan>
   </text>
 
   <!-- tagline -->
-  <text x="640" y="450" text-anchor="middle" fill="#e4e2de" font-size="26" letter-spacing="0.01em" xml:space="preserve">
+  <text x="640" y="475" text-anchor="middle" fill="#e4e2de" font-size="26" letter-spacing="0.01em" xml:space="preserve">
     <tspan fill="#a8a195">A declarative </tspan><tspan fill="#e4e2de">AI agent environment manager</tspan><tspan fill="#a8a195">, written in </tspan><tspan fill="#e8a94d">Rust</tspan><tspan fill="#a8a195">.</tspan>
   </text>
 
   <!-- prompt + command -->
-  <text x="640" y="500" text-anchor="middle" font-size="24" xml:space="preserve">
+  <text x="640" y="520" text-anchor="middle" font-size="24" xml:space="preserve">
     <tspan fill="#e8a94d">❯</tspan><tspan fill="#e4e2de"> kasetto </tspan><tspan fill="#e8a94d">sync</tspan>
   </text>
 
   <!-- chip strip totals -->
-  <text x="640" y="546" text-anchor="middle" font-size="20" xml:space="preserve">
+  <text x="640" y="560" text-anchor="middle" font-size="20" xml:space="preserve">
     <tspan fill="#e8a94d">●</tspan><tspan fill="#e4e2de"> 4 </tspan><tspan fill="#e8a94d">updated</tspan><tspan fill="#a8a195">    </tspan><tspan fill="#84c578">●</tspan><tspan fill="#e4e2de"> 2 </tspan><tspan fill="#84c578">added</tspan><tspan fill="#a8a195">    </tspan><tspan fill="#e87e6c">●</tspan><tspan fill="#e4e2de"> 1 </tspan><tspan fill="#e87e6c">removed</tspan><tspan fill="#a8a195">    </tspan><tspan fill="#6e6759">●</tspan><tspan fill="#e4e2de"> 11 </tspan><tspan fill="#a8a195">unchanged</tspan>
   </text>
 
   <!-- Japanese subtitle, popil yellow -->
-  <text x="640" y="585" text-anchor="middle" fill="#d4b070" font-size="14" letter-spacing="0.4em" font-family="'Noto Sans Mono CJK JP','Noto Sans JP','Yu Gothic',sans-serif">スキル・パッケージ・マネージャー</text>
+  <text x="640" y="592" text-anchor="middle" fill="#d4b070" font-size="14" letter-spacing="0.4em" font-family="'Noto Sans Mono CJK JP','Noto Sans JP','Yu Gothic',sans-serif">スキル・パッケージ・マネージャー</text>
 </svg>
