@@ -1,7 +1,7 @@
 # Requires GitHub secrets
 # - GH_TOKEN
 
-name: GH Labels
+name: Labels
 
 on:
   push:
