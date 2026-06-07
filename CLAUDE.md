@@ -7,12 +7,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 `just check` runs format + lint + test + build for both the Rust crate and the Next.js site under `site/`. Per-target recipes are split:
 
 ```bash
-just check          # full validation (rs + site)
+just check          # full validation: format + lint + test + build (rs + site)
 just format         # format-rs + format-next
 just lint           # lint-rs + lint-next
+just audit          # audit-rs + audit-next
 just test           # test-rs + test-next
-just test-rs        # cargo test
-just test-next      # no-op placeholder (no JS tests yet)
+just test-rs        # cargo test (skipped when .no-tests sentinel exists)
+just test-next      # @echo "no Next.js tests" — pure no-op placeholder
 just build          # build-rs + build-next
 cargo test <name>   # run a single Rust test
 just dev-next       # local Next.js dev server
@@ -82,7 +83,7 @@ Next.js 15 App Router project that hosts both the marketing landing (`/`) and th
 
 All four workflows expose `workflow_dispatch` so they can be triggered manually with `gh workflow run <name>.yaml --ref main`.
 
-- **`ci.yaml`** — runs on push to `main` and on every PR. Eight `ubuntu-latest` jobs in two parallel pipelines. Rust: `rs-lint` → `rs-audit` (parallel) → `rs-test` → `rs-build`. Next: `next-lint` → `next-audit` (parallel) → `next-test` → `next-build`. Each job sets up its own toolchain; Rust jobs use `Swatinem/rust-cache@v2` for build caching and `taiki-e/install-action@cargo-audit` in `rs-audit`. Test jobs are gated by `if: hashFiles('.no-tests') == ''`. All jobs drive work through `just` recipes (`just lint-rs`, `just audit-rs`, `just test-rs`, `just build-rs`, `just lint-next`, `just audit-next`, `just test-next`, `just build-next`).
+- **`ci.yaml`** — runs on push to `main` and on every PR. Two flat jobs running in parallel on `ubuntu-24.04-arm`. `ci-rs`: install-rs → lint-rs → audit-rs → test-rs → build-rs. `ci-next`: install-next → lint-next → audit-next → test-next → build-next. Rust job sets up the toolchain via `dtolnay/rust-toolchain@stable` (with `rustfmt,clippy` components), `Swatinem/rust-cache@v2` for build caching, and `taiki-e/install-action@v2` for `cargo-audit`. `test-rs` is guarded by a `.no-tests` sentinel (if the sentinel file exists it prints a skip message; since no sentinel is committed, `cargo test` always runs). `test-next` is a pure no-op placeholder (`@echo "no Next.js tests"`). All steps drive work through `just` recipes (`just lint-rs`, `just audit-rs`, `just test-rs`, `just build-rs`, `just lint-next`, `just audit-next`, `just test-next`, `just build-next`).
 - **`release.yaml`** — manual dispatch only. Optional `version` input; otherwise `git-cliff --bumped-version` derives the next version from conventional commits. Pipeline: `tag` (bump `Cargo.toml` + `Cargo.lock`, regenerate `CHANGELOG.md` via `git-cliff`, commit as `release: vX.Y.Z`, tag, push) → `build` (matrix across 6 targets: linux/macos/windows × x86_64/aarch64; cross-compiles aarch64 linux with `gcc-aarch64-linux-gnu`) → `release` (sha256 `checksums.txt`, GitHub Release with `--latest --strip header` changelog body) → `publish-crate` (`cargo publish`, needs `CARGO_REGISTRY_TOKEN`) + `update-homebrew` (regenerates `Formula/kasetto.rb` in `pivoshenko/homebrew-tap`, needs `HOMEBREW_TAP_TOKEN`) + `update-scoop` (regenerates `kasetto.json` in `pivoshenko/scoop-bucket`, needs `SCOOP_BUCKET_TOKEN`).
 - **`site.yaml`** — manual dispatch only. Runs `npx vercel deploy --prod --yes` against the Vercel project. Needs `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_SITE_PROJECT_ID`. Not coupled to `release.yaml` — site ships independently of the CLI.
 - **`labels.yaml`** — auto-syncs GitHub labels via `crazy-max/ghaction-github-labeler` whenever `.github/labels.yaml` or the workflow itself changes on `main`. Needs `GH_TOKEN`.
