@@ -6,63 +6,176 @@ on:
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
-  ci-rs:
-    runs-on: ubuntu-latest
+  # ── Rust pipeline ──────────────────────────────────────────────────────────
+
+  rs-lint:
+    name: Rust · lint
+    runs-on: ubuntu-24.04-arm
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+      - uses: extractions/setup-just@v3
 
-      - name: Install just
-        uses: taiki-e/install-action@just
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt,clippy
 
-      - name: Install cargo-audit
-        uses: taiki-e/install-action@cargo-audit
+      - uses: Swatinem/rust-cache@v2
 
-      - name: Run linters
-        run: just lint-rs
+      - run: just install-rs
 
-      - name: Run audit
-        run: just audit-rs
+      - run: just lint-rs
 
-      - name: Run tests
+  rs-audit:
+    name: Rust · audit
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: extractions/setup-just@v3
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: taiki-e/install-action@cargo-audit
+
+      - run: just install-rs
+
+      - run: just audit-rs
+
+  rs-test:
+    name: Rust · test
+    runs-on: ubuntu-24.04-arm
+    needs: [rs-lint, rs-audit]
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: extractions/setup-just@v3
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - run: just install-rs
+
+      - if: hashFiles('.no-tests') == ''
         run: just test
 
-      - name: Build
-        run: just build-rs
-
-  ci-next:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: site
+  rs-build:
+    name: Rust · build
+    runs-on: ubuntu-24.04-arm
+    needs: [rs-test]
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
+      - uses: extractions/setup-just@v3
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - run: just install-rs
+
+      - run: just build-rs
+
+  # ── Next.js pipeline ───────────────────────────────────────────────────────
+
+  next-lint:
+    name: Next · lint
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: extractions/setup-just@v3
+
+      - uses: pnpm/action-setup@v4
         with:
           package_json_file: site/package.json
 
-      - name: Install Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
           cache-dependency-path: site/pnpm-lock.yaml
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - run: just install-next
 
-      - name: Run linters
-        run: pnpm lint
+      - run: just lint-next
 
-      - name: Run audit
-        run: pnpm audit
+  next-audit:
+    name: Next · audit
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v6
 
-      - name: Build
-        run: pnpm build
+      - uses: extractions/setup-just@v3
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: site/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: site/pnpm-lock.yaml
+
+      - run: just install-next
+
+      - run: just audit-next
+
+  next-test:
+    name: Next · test
+    runs-on: ubuntu-24.04-arm
+    needs: [next-lint, next-audit]
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: extractions/setup-just@v3
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: site/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: site/pnpm-lock.yaml
+
+      - run: just install-next
+
+      - if: hashFiles('.no-tests') == ''
+        run: just test-next
+
+  next-build:
+    name: Next · build
+    runs-on: ubuntu-24.04-arm
+    needs: [next-test]
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: extractions/setup-just@v3
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: site/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: site/pnpm-lock.yaml
+
+      - run: just install-next
+
+      - run: just build-next

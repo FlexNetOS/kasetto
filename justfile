@@ -25,8 +25,13 @@ lint-next:
 
 lint: lint-rs lint-next
 
-test:
+test-rs:
     cargo test
+
+test-next:
+    @echo "no Next.js tests"
+
+test: test-rs test-next
 
 update-rs:
     cargo update
