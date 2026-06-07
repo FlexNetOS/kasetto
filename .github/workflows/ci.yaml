@@ -14,10 +14,8 @@ permissions:
   contents: read
 
 jobs:
-  # ── Rust pipeline ──────────────────────────────────────────────────────────
-
-  rs-lint:
-    name: Rust · lint
+  ci-rs:
+    name: Rust · CI
     runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v6
@@ -30,67 +28,23 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit
+
       - run: just install-rs
 
       - run: just lint-rs
 
-  rs-audit:
-    name: Rust · audit
-    runs-on: ubuntu-24.04-arm
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: extractions/setup-just@v4
-
-      - uses: dtolnay/rust-toolchain@stable
-
-      - uses: Swatinem/rust-cache@v2
-
-      - uses: taiki-e/install-action@cargo-audit
-
-      - run: just install-rs
-
       - run: just audit-rs
 
-  rs-test:
-    name: Rust · test
-    runs-on: ubuntu-24.04-arm
-    needs: [rs-lint, rs-audit]
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: extractions/setup-just@v4
-
-      - uses: dtolnay/rust-toolchain@stable
-
-      - uses: Swatinem/rust-cache@v2
-
-      - run: just install-rs
-
       - if: hashFiles('.no-tests') == ''
-        run: just test
-
-  rs-build:
-    name: Rust · build
-    runs-on: ubuntu-24.04-arm
-    needs: [rs-test]
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: extractions/setup-just@v4
-
-      - uses: dtolnay/rust-toolchain@stable
-
-      - uses: Swatinem/rust-cache@v2
-
-      - run: just install-rs
+        run: just test-rs
 
       - run: just build-rs
 
-  # ── Next.js pipeline ───────────────────────────────────────────────────────
-
-  next-lint:
-    name: Next · lint
+  ci-next:
+    name: Next · CI
     runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v6
@@ -111,71 +65,9 @@ jobs:
 
       - run: just lint-next
 
-  next-audit:
-    name: Next · audit
-    runs-on: ubuntu-24.04-arm
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: extractions/setup-just@v4
-
-      - uses: pnpm/action-setup@v6
-        with:
-          package_json_file: site/package.json
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: pnpm
-          cache-dependency-path: site/pnpm-lock.yaml
-
-      - run: just install-next
-
       - run: just audit-next
-
-  next-test:
-    name: Next · test
-    runs-on: ubuntu-24.04-arm
-    needs: [next-lint, next-audit]
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: extractions/setup-just@v4
-
-      - uses: pnpm/action-setup@v6
-        with:
-          package_json_file: site/package.json
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: pnpm
-          cache-dependency-path: site/pnpm-lock.yaml
-
-      - run: just install-next
 
       - if: hashFiles('.no-tests') == ''
         run: just test-next
-
-  next-build:
-    name: Next · build
-    runs-on: ubuntu-24.04-arm
-    needs: [next-test]
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: extractions/setup-just@v4
-
-      - uses: pnpm/action-setup@v6
-        with:
-          package_json_file: site/package.json
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: pnpm
-          cache-dependency-path: site/pnpm-lock.yaml
-
-      - run: just install-next
 
       - run: just build-next
