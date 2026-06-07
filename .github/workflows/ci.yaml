@@ -38,8 +38,7 @@ jobs:
 
       - run: just audit-rs
 
-      - if: hashFiles('.no-tests') == ''
-        run: just test-rs
+      - run: just test-rs
 
       - run: just build-rs
 
@@ -67,7 +66,6 @@ jobs:
 
       - run: just audit-next
 
-      - if: hashFiles('.no-tests') == ''
-        run: just test-next
+      - run: just test-next
 
       - run: just build-next
