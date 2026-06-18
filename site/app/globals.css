@@ -556,7 +556,7 @@ button {
 /* ─── Install ─── */
 .install-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
   padding: 18px 24px;
@@ -587,7 +587,7 @@ button {
   font-family: inherit;
   font-size: var(--fs-md);
   color: var(--fg-muted);
-  white-space: nowrap;
+  white-space: pre;
   overflow: hidden;
   text-overflow: ellipsis;
   letter-spacing: var(--tracking-tight);
@@ -696,7 +696,7 @@ button {
     min-width: unset;
   }
   .install-cmd {
-    white-space: normal;
+    white-space: pre-line;
     word-break: break-all;
   }
 

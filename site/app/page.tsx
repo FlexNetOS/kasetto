@@ -17,7 +17,7 @@ const INSTALL = [
   },
   {
     label: "HOMEBREW",
-    cmd: "brew install pivoshenko/tap/kasetto",
+    cmd: "brew tap pivoshenko/tap\nbrew trust pivoshenko/tap\nbrew install kasetto",
   },
   {
     label: "CARGO",

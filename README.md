@@ -58,7 +58,9 @@ powershell -ExecutionPolicy Bypass -c "irm kasetto.dev/install.ps1 | iex"
 ### Homebrew
 
 ```bash
-brew install pivoshenko/tap/kasetto
+brew tap pivoshenko/tap
+brew trust pivoshenko/tap
+brew install kasetto
 ```
 
 ### Scoop (Windows)
