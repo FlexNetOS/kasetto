@@ -8,3 +8,5 @@ onlyBuiltDependencies:
 
 overrides:
   postcss@<8.5.10: ">=8.5.10"
+  js-yaml@<=4.1.1: "^4.1.2"
+  dompurify@<3.4.9: "^3.4.9"
