@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.3.0] - 2026-06-18
+
+### Bug fixes
+
+- **site**: Align demo status column for longer instruction slugs
+- **site**: Override js-yaml and dompurify to patch transitive vulns
+
+### Documentation
+
+- Document instructions as a first-class asset kind
+- Showcase instructions in readme demo and hero terminal
+- Use brew tap/trust/install for Homebrew instructions
+
+### Features
+
+- **rules**: Distribute agent rules across all agents
+
+### Refactor
+
+- Rename rules asset kind to instructions
+
 ## [3.2.0] - 2026-06-12
 
 ### Bug fixes
@@ -349,6 +370,7 @@ All notable changes to this project will be documented in this file.
 
 ### Release
 
+- V3.2.0
 - V3.1.0
 - V3.0.0
 - V2.12.0
