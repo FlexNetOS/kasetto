@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.3.1] - 2026-06-18
+
+### Bug fixes
+
+- **instructions**: Honor sub-dir, prune targetless reconfig, normalize extension names
+
 ## [3.3.0] - 2026-06-18
 
 ### Bug fixes
@@ -22,6 +28,10 @@ All notable changes to this project will be documented in this file.
 ### Refactor
 
 - Rename rules asset kind to instructions
+
+### Release
+
+- V3.3.0
 
 ## [3.2.0] - 2026-06-12
 
