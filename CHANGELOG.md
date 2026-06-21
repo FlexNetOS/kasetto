@@ -2,11 +2,42 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.4.0] - 2026-06-21
+
+### Bug fixes
+
+- **commands**: Resolve commands from source_root, not cleanup_dir
+- **cache**: Fall back to direct extract when the cache dir is unwritable
+- **mcps**: Resolve MCP files from source_root, not cleanup_dir
+
+### Documentation
+
+- Correct inaccuracies found in a full docs audit
+- Document source cache, sparse extraction, parallel fetch
+
+### Features
+
+- **site**: Add security headers, Analytics and Speed Insights
+
+### Bench
+
+- Add hyperfine cold-sync benchmark
+
+### Perf
+
+- Sparse-extract sub-dir sources and stream archive bodies
+- Download source archives in parallel during skill sync
+- Cache extracted source trees for immutable refs
+
 ## [3.3.1] - 2026-06-18
 
 ### Bug fixes
 
 - **instructions**: Honor sub-dir, prune targetless reconfig, normalize extension names
+
+### Release
+
+- V3.3.1
 
 ## [3.3.0] - 2026-06-18
 
