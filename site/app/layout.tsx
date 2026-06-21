@@ -1,3 +1,5 @@
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { RootProvider } from "fumadocs-ui/provider";
 import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
@@ -51,6 +53,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
           </div>
         </RootProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
