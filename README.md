@@ -28,12 +28,13 @@ Name comes from the Japanese word **カセット** (*kasetto*) - cassette. Think
 
 There are good tools in this space already - [Vercel Skills](https://github.com/vercel-labs/skills) installs skills from a curated catalog, and [Claude Plugins](https://claude.com/plugins) offer runtime integrations. Both work well for one-off installs, but neither gives you a declarative, version-controlled config.
 
-Kasetto is a **community-first** project that solves a different problem: **declarative, reproducible skill management across machines and agents.**
+Kasetto is a **community-first** project that solves a different problem: **declarative, reproducible AI environment management across projects, machines, and agents.**
 
 - **Declarative** — one YAML file, your whole setup: skills, commands, MCPs, instructions, and agents. Apply globally or scope to a project; configs compose with `extends`, so org, team, and project stay in sync.
 - **Enterprise & private repositories** — pull from anywhere: GitHub, GitLab, Bitbucket, Codeberg, Gitea, and self-hosted instances, public or private. Onboard a new engineer with one command; everyone gets the same environment, zero drift.
 - **Multi-agent** — write once, ship everywhere. Claude Code, Cursor, Codex, Windsurf, Copilot, Gemini CLI, and [many more](#supported-agents) — one sync keeps them all current.
 - **Skills, Commands, MCPs & Instructions** — four asset kinds, one source: skills, commands, MCPs, and instructions (`CLAUDE.md`, `.cursor/rules`, `AGENTS.md`, …). Everything is transformed into each agent's native format, and auto-merged. Distribute instructions, tools, and prompts as easily as sharing a repository link.
+- **Secrets, never committed** — reference tokens with `${kst_…}` placeholders; Kasetto resolves them at sync time from your environment, a credentials file, or your existing secret manager (1Password, Vault, AWS, GCP, Azure, KeePassXC, pass, macOS Keychain) and writes the value into the agent's settings only — never into `kasetto.lock`.
 - **Speed** — instant by design. Built in Rust, it hashes content and diffs a lock file so only what changed gets touched — full syncs finish in seconds.
 - **Universal** — one static binary for macOS, Linux, and Windows. Install as `kasetto`, run as `kst`. CI-friendly with `--json` output and real exit codes.
 
@@ -236,7 +237,22 @@ MCP packs often need a token or password. Reference one with a `${kst_<name>}` p
 }
 ```
 
-Values come from environment variables first (the name as written, then uppercased — `${kst_vercel_token}` reads `KST_VERCEL_TOKEN`), then `~/.config/kasetto/credentials.yaml` (`__` in a name descends nested keys, e.g. `${kst_vercel__token}` → `vercel.token`). To pin one source, use the tagged form `${kst:<source>:<ref>}` — `env` (a specific env var), `crd` (a credentials path), or an external manager via its own CLI: `op` (1Password), `vault` (HashiCorp Vault), `kp` (KeePassXC, database via `secrets.keepass`), `aws` (Secrets Manager), `gcp` (Secret Manager), `az` (Key Vault), `pass` (pass/gopass), and `keychain` (macOS). Each inherits your existing CLI session, so kasetto stores no tokens of its own. A missing secret fails the sync (exit non-zero) unless you pass `--allow-missing-secrets`. The resolved value never lands in `kasetto.lock`, so the lock stays commit-safe. Rotated a secret? A plain `sync` won't touch the live entry — run `kst sync --update` to push it. Full details in the [secret-injection docs](https://kasetto.dev/docs/secrets).
+Values come from environment variables first (the name as written, then uppercased — `${kst_vercel_token}` reads `KST_VERCEL_TOKEN`), then `~/.config/kasetto/credentials.yaml` (`__` in a name descends nested keys, e.g. `${kst_vercel__token}` → `vercel.token`).
+
+To pin exactly one source, use the tagged form `${kst:<source>:<ref>}`:
+
+- **`env`** — a specific environment variable
+- **`crd`** — a `credentials.yaml` path
+- **`op`** — 1Password (`op` CLI)
+- **`vault`** — HashiCorp Vault (`vault` CLI)
+- **`kp`** — KeePassXC (`keepassxc-cli`; database via `secrets.keepass`)
+- **`aws`** — AWS Secrets Manager (`aws` CLI)
+- **`gcp`** — Google Secret Manager (`gcloud` CLI)
+- **`az`** — Azure Key Vault (`az` CLI)
+- **`pass`** — pass / gopass (`pass` CLI)
+- **`keychain`** — macOS Keychain (`security`)
+
+Each external manager inherits your existing CLI session, so kasetto stores no tokens of its own. A missing secret fails the sync (exit non-zero) unless you pass `--allow-missing-secrets`. The resolved value never lands in `kasetto.lock`, so the lock stays commit-safe. Rotated a secret? A plain `sync` won't touch the live entry — run `kst sync --update` to push it. Full details in the [secret-injection docs](https://kasetto.dev/docs/secrets).
 
 ## Supported Agents
 
