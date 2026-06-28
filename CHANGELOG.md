@@ -2,6 +2,55 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.5.0] - 2026-06-28
+
+### Bug fixes
+
+- **deps**: Bump quinn-proto to 0.11.15 for RUSTSEC-2026-0185
+- **lock**: Record every skill destination in the lock rebuild
+- **sync**: Track every skill destination to stop multi-agent data loss
+- **secrets**: Scope --update rotation per file, not per source
+
+### Documentation
+
+- **readme**: List secret managers and broaden positioning
+- **lock**: Note the comma-in-path limitation of the destination CSV
+- **secrets**: Drop stale provider count in tagged-form intro
+- **site**: Tighten feature-tab copy
+- **secrets**: Document #json-key for gcp and az
+- **secrets**: Document aws, gcp, az, pass, and keychain sources
+- **secrets**: Flag that rotation requires --update
+- **secrets**: Document the KeePass (kp) secret source
+- **secrets**: Lowercase ${kst_…} grammar and env/crd source tags
+- **secrets**: Document op and vault external secret managers
+- **secrets**: Document ${KST_…} secret injection across README and site
+
+### Features
+
+- **doctor**: Report untracked entries in managed install paths
+- **secrets**: Support #json-key extraction for gcp and az
+- **site**: Add secret-sources cards to the homepage
+- **secrets**: Add aws, gcp, az, pass, and keychain sources
+- **secrets**: Harden injection per design review
+- **secrets**: Resolve ${kst:kp:…} via the KeePassXC CLI
+- **secrets**: Lowercase sentinel and explicit env/crd source tags
+- **secrets**: Resolve ${KST:op:…} and ${KST:vault:…} via the op/vault CLIs
+- **secrets**: Inject ${KST_…} placeholders into MCP configs at sync time
+
+### Refactor
+
+- Dedup path-set helpers and share MCP JSON object parsing
+- **secrets**: Derive vault_path_field from split_field
+- **site**: Drop the secret-cards header bar
+- **site**: Drop redundant CLI label from secret cards, move above example
+- **sync**: Extract classify_mcp_file from sync_mcps
+- **sync**: Bundle per-skill install args into SkillJob
+
+### Style
+
+- Normalize unicode ellipsis to ASCII ... across docs, comments, and CLI help
+- Collapse single-line use import in sync/skills
+
 ## [3.4.0] - 2026-06-21
 
 ### Bug fixes
@@ -28,6 +77,10 @@ All notable changes to this project will be documented in this file.
 - Sparse-extract sub-dir sources and stream archive bodies
 - Download source archives in parallel during skill sync
 - Cache extracted source trees for immutable refs
+
+### Release
+
+- V3.4.0
 
 ## [3.3.1] - 2026-06-18
 
