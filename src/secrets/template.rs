@@ -1,4 +1,4 @@
-//! Scanner for `${kst_…}` secret placeholders in synced asset values.
+//! Scanner for `${kst_...}` secret placeholders in synced asset values.
 //!
 //! Two forms: the chain form `${kst_name}` (resolved against env + credential
 //! files) and the tagged form `${kst:<source>:<ref>}` routed to one explicit
@@ -12,7 +12,7 @@ use crate::error::{err, Result};
 /// The literal placeholder prefix every secret reference opens with.
 const SENTINEL: &str = "${kst";
 
-/// A parsed `${kst…}` placeholder.
+/// A parsed `${kst...}` placeholder.
 #[derive(Debug, PartialEq)]
 pub(crate) struct SecretRef {
     /// Flat, env-style key including the `kst_` prefix (e.g. `kst_vercel__token`).
@@ -41,9 +41,9 @@ pub(crate) fn has_placeholder(s: &str) -> bool {
     s.contains(SENTINEL)
 }
 
-/// Substitute every `${kst…}` placeholder in `input`. `lookup` returns
+/// Substitute every `${kst...}` placeholder in `input`. `lookup` returns
 /// `Some(value)` to replace, `None` to leave the placeholder literal. Non-`kst`
-/// `${…}` and malformed sentinels are passed through untouched.
+/// `${...}` and malformed sentinels are passed through untouched.
 pub(crate) fn substitute<F>(input: &str, mut lookup: F) -> Result<String>
 where
     F: FnMut(&SecretRef) -> Result<Option<String>>,

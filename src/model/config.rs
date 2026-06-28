@@ -36,19 +36,19 @@ pub(crate) struct Config {
 /// `secrets:` config block. Values live in `credentials.yaml` / env, never here.
 #[derive(Debug, Deserialize, Default)]
 pub(crate) struct SecretsConfig {
-    /// What to do when a `${kst_…}` placeholder can't be resolved. Default `error`.
+    /// What to do when a `${kst_...}` placeholder can't be resolved. Default `error`.
     #[serde(default)]
     pub on_missing: Option<OnMissing>,
     /// Extra credential files (relative to the config dir, or absolute), searched
     /// after the default `$XDG_CONFIG_HOME/kasetto/credentials.yaml`.
     #[serde(default)]
     pub files: Vec<String>,
-    /// KeePass database location for `${kst:kp:…}` refs. Carries no password.
+    /// KeePass database location for `${kst:kp:...}` refs. Carries no password.
     #[serde(default)]
     pub keepass: Option<KeePassConfig>,
 }
 
-/// `secrets.keepass:` block — locates the KeePass database for `${kst:kp:…}`
+/// `secrets.keepass:` block — locates the KeePass database for `${kst:kp:...}`
 /// refs. The master password (if any) comes from `$KST_KEEPASS_PASSWORD` at
 /// runtime, never from this committed file.
 #[derive(Debug, Deserialize, Default)]

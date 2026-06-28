@@ -69,7 +69,7 @@ pub(crate) struct CommandTarget {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub(crate) enum InstructionFormat {
     /// Plain Markdown body merged into a single shared file (`CLAUDE.md`,
-    /// `AGENTS.md`, `GEMINI.md`, `.github/copilot-instructions.md`, …) via
+    /// `AGENTS.md`, `GEMINI.md`, `.github/copilot-instructions.md`, ...) via
     /// managed comment-block markers so multiple instructions and hand edits coexist.
     AggregateMarkdown,
     /// `<name>.mdc` per instruction — Cursor MDC frontmatter (`description`, `globs`,

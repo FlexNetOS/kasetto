@@ -142,7 +142,7 @@ pub(crate) struct SyncArgs {
     pub locked: bool,
     #[arg(long)]
     #[arg(
-        help = "warn instead of failing when a ${kst_…} secret can't be resolved",
+        help = "warn instead of failing when a ${kst_...} secret can't be resolved",
         long_help = "By default an unresolved `${kst_name}` placeholder in an MCP config marks that entry broken and exits non-zero. With this flag, kasetto warns and writes the literal placeholder instead."
     )]
     pub allow_missing_secrets: bool,

@@ -33,7 +33,7 @@ struct PendingMcp {
     /// Replace an existing same-named server on merge (the `--update` rotation
     /// path for secret-bearing packs).
     overwrite: bool,
-    /// Pack carries `${kst…}` placeholders — recorded in the lock so the skip
+    /// Pack carries `${kst...}` placeholders — recorded in the lock so the skip
     /// path can hint that rotation needs `--update`, and used to perms-check the
     /// destination after a plaintext secret is written.
     has_secrets: bool,
@@ -370,7 +370,7 @@ fn classify_mcp_file(
         .unwrap_or_default();
     let server_names: Vec<String> = servers.keys().cloned().collect();
     // Only the `mcpServers` object is injected, so detect placeholders there —
-    // not anywhere in the file. A `${kst_…}` in some other key would otherwise
+    // not anywhere in the file. A `${kst_...}` in some other key would otherwise
     // raise a spurious world-readable warning and `--update` tip for a file that
     // gets no secret written.
     let has_secrets = serde_json::to_string(&servers)

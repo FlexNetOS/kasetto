@@ -257,7 +257,7 @@ pub(super) fn download_extract(
 }
 
 /// Stream-extract a gzipped tarball into `dst`, stripping the archive's top-level
-/// directory (the `repo-<ref>/` wrapper GitHub/GitLab/… add).
+/// directory (the `repo-<ref>/` wrapper GitHub/GitLab/... add).
 ///
 /// When `sub_dir` is `Some`, only entries under that repo-relative path are
 /// written — **sparse extraction**. The gzip stream is still read in full (it is
@@ -307,7 +307,7 @@ mod tests {
     static ENV_LOCK: Mutex<()> = Mutex::new(());
 
     /// Build an in-memory `.tar.gz` from `(path, contents)` pairs, mirroring a
-    /// host archive's `repo-<ref>/…` top-level wrapper.
+    /// host archive's `repo-<ref>/...` top-level wrapper.
     fn make_targz(entries: &[(&str, &[u8])]) -> Vec<u8> {
         use flate2::write::GzEncoder;
         use flate2::Compression;

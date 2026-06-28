@@ -25,7 +25,7 @@ pub(crate) struct AssetEntry {
     /// when this is empty.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub source_revision: String,
-    /// `true` for MCP packs that carry `${kst…}` secret placeholders. Lets the
+    /// `true` for MCP packs that carry `${kst...}` secret placeholders. Lets the
     /// no-fetch skip path hint that a rotated secret needs `--update` to
     /// re-resolve. Omitted when false so non-secret locks stay byte-identical.
     #[serde(default, skip_serializing_if = "is_false")]

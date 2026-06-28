@@ -13,7 +13,7 @@
 //! | Token       | Hex       | Use                                                                                    |
 //! |-------------|-----------|----------------------------------------------------------------------------------------|
 //! | `ACCENT`    | bold      | emphasis (no color) — prompts, labels, lead verbs. Compose with a hue for bold-colored. |
-//! | `ATTENTION` | `#e8a94d` | help headers/literals, section headers, `Updated`/`Would …` verbs, `warning:`, banner subtitle, spinner glyph |
+//! | `ATTENTION` | `#e8a94d` | help headers/literals, section headers, `Updated`/`Would ...` verbs, `warning:`, banner subtitle, spinner glyph |
 //! | `SUCCESS`   | `#84c578` | `Installed` / `Created` / `Audited` verbs, `+` and `✓` glyphs, `✓ healthy` badge        |
 //! | `ERROR`     | `#e87e6c` | `error:` prefix, `−` and `✗` glyphs, `✗ issues` badge, failure rows                     |
 //! | `INFO`      | `#6cbfd3` | `tip:` / `note:` prefixes, source repo labels                                          |
@@ -26,11 +26,11 @@
 use clap::builder::styling::{Effects, RgbColor, Style, Styles};
 
 /// Bold (no foreground color). Prompts, labels, lead verbs. Compose with a
-/// hue for bold-colored emphasis (e.g. `{ACCENT}{ATTENTION}…`).
+/// hue for bold-colored emphasis (e.g. `{ACCENT}{ATTENTION}...`).
 pub(crate) const ACCENT: &str = "\x1b[1m";
 
 /// Amber `#e8a94d`. Help headers/literals, section headers, `Updated` /
-/// `Would …` verbs, `warning:` prefix, banner subtitle, spinner glyph,
+/// `Would ...` verbs, `warning:` prefix, banner subtitle, spinner glyph,
 /// `kasetto` lead.
 pub(crate) const ATTENTION: &str = "\x1b[38;2;232;169;77m";
 

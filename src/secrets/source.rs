@@ -1,8 +1,8 @@
 //! Secret sources: where injected values come from. Resolution walks the
 //! sources, skipping any that don't `handle` the ref, and the first hit wins.
 //! Chain refs (`${kst_name}`) go to env + credential files (env first); tagged
-//! refs route to one explicit source — `${kst:env:…}`/`${kst:crd:…}` reuse the
-//! env/credentials sources, `${kst:op:…}`/`${kst:vault:…}` the external CLIs.
+//! refs route to one explicit source — `${kst:env:...}`/`${kst:crd:...}` reuse the
+//! env/credentials sources, `${kst:op:...}`/`${kst:vault:...}` the external CLIs.
 
 use std::path::Path;
 use std::process::Command;
@@ -15,15 +15,15 @@ use super::template::SecretRef;
 use super::Secret;
 
 pub(super) trait SecretSource {
-    /// Short label used in "secret not found (searched: …)" diagnostics.
+    /// Short label used in "secret not found (searched: ...)" diagnostics.
     fn name(&self) -> &'static str;
     /// Whether this source is responsible for `r` (by ref form / tag).
     fn handles(&self, r: &SecretRef) -> bool;
     fn get(&self, r: &SecretRef) -> Result<Option<Secret>>;
 }
 
-/// Process environment variables. Chain refs key off the flat `kst_…` name
-/// (also tried uppercased, the conventional `KST_…` form); the explicit
+/// Process environment variables. Chain refs key off the flat `kst_...` name
+/// (also tried uppercased, the conventional `KST_...` form); the explicit
 /// `${kst:env:NAME}` tag looks up `NAME` verbatim.
 pub(super) struct EnvSource;
 
@@ -124,7 +124,7 @@ fn descend(root: &Yaml, segments: &[&str]) -> Option<String> {
 }
 
 /// 1Password, via the `op` CLI. Tagged form `${kst:op:<vault>/<item>/<field>}`
-/// (or a full `${kst:op://<vault>/<item>/<field>}` URI) → `op read op://…`.
+/// (or a full `${kst:op://<vault>/<item>/<field>}` URI) → `op read op://...`.
 pub(super) struct OnePasswordSource;
 
 impl SecretSource for OnePasswordSource {
@@ -164,7 +164,7 @@ impl SecretSource for VaultSource {
 }
 
 /// KeePass, via the `keepassxc-cli` CLI. Tagged form `${kst:kp:<entry>#<attr>}`
-/// (`<attr>` defaults to `Password`) → `keepassxc-cli show -s -a <attr> …`,
+/// (`<attr>` defaults to `Password`) → `keepassxc-cli show -s -a <attr> ...`,
 /// unlocked with a key-file and/or a master password piped on stdin.
 pub(super) struct KeePassSource {
     database: String,
@@ -427,7 +427,7 @@ fn az_vault_name(payload: &str) -> Result<(&str, &str)> {
 }
 
 /// Build the canonical `op://vault/item/field` URI from a tagged payload, which
-/// may already carry the `//` (from `${kst:op://…}`) or omit it (`${kst:op:…}`).
+/// may already carry the `//` (from `${kst:op://...}`) or omit it (`${kst:op:...}`).
 fn op_uri(payload: &str) -> String {
     match payload.strip_prefix("//") {
         Some(rest) => format!("op://{rest}"),

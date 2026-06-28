@@ -92,8 +92,8 @@ mcps:
 | `skills`      | **yes**  | List of skill sources                                               |
 | `mcps`        | no       | List of MCP server sources                                          |
 | `commands`    | no       | List of slash-command sources                                       |
-| `instructions`       | no       | List of instruction sources (CLAUDE.md / .cursor/rules / AGENTS.md …)      |
-| `secrets`     | no       | Secret-injection policy for `${kst_…}` placeholders (see [Secret Injection](/docs/secrets)) |
+| `instructions`       | no       | List of instruction sources (CLAUDE.md / .cursor/rules / AGENTS.md ...)      |
+| `secrets`     | no       | Secret-injection policy for `${kst_...}` placeholders (see [Secret Injection](/docs/secrets)) |
 | `extends`     | no       | Path or URL of a parent config to inherit from (string or list)     |
 
 ### Skill Source Fields
@@ -192,13 +192,13 @@ Each entry in the `instructions` list can be a plain string (name) or an object 
 Each instruction is transformed into the target agent's native format. Two destination shapes exist:
 
 - **Aggregate file** — many instructions merge into one shared file (`CLAUDE.md`, `AGENTS.md`,
-  `GEMINI.md`, `.github/copilot-instructions.md`, …). Each instruction is wrapped in a managed
-  `<!-- kasetto:instruction:ID … -->` comment block, so your own hand-written content and other instructions in
+  `GEMINI.md`, `.github/copilot-instructions.md`, ...). Each instruction is wrapped in a managed
+  `<!-- kasetto:instruction:ID ... -->` comment block, so your own hand-written content and other instructions in
   the same file are preserved. `remove`/`clean` strip only kasetto's blocks — they never delete the
   file.
 - **Per-instruction directory** — one file per instruction. Cursor (`.cursor/rules/<name>.mdc`) gets reconstructed
   MDC frontmatter (`description`, `globs`, `alwaysApply`); other directory agents
-  (`.windsurf/rules`, `.clinerules`, `.continue/rules`, …) get the Markdown body only.
+  (`.windsurf/rules`, `.clinerules`, `.continue/rules`, ...) get the Markdown body only.
 
 `globs`/`alwaysApply` are only meaningful for Cursor; they are dropped for agents that don't scope
 instructions. See [supported agents](/docs/agents) for the per-agent destinations.

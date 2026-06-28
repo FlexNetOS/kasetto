@@ -1,9 +1,9 @@
-//! Instruction (CLAUDE.md / .cursor/rules / AGENTS.md …) parsing and per-agent transforms.
+//! Instruction (CLAUDE.md / .cursor/rules / AGENTS.md ...) parsing and per-agent transforms.
 //!
 //! An instruction source is Markdown with optional YAML frontmatter, the same shape as a
 //! slash command. The divergence from commands is the destination: some agents
 //! take a single shared file that many instructions merge into (`AggregateMarkdown`,
-//! handled with managed `<!-- kasetto:instruction:ID … -->` comment blocks so user
+//! handled with managed `<!-- kasetto:instruction:ID ... -->` comment blocks so user
 //! hand-edits survive), while others take a directory of one file per instruction.
 
 mod transform;
@@ -78,7 +78,7 @@ pub(crate) fn dest_token(target: &InstructionTarget, rel: &str) -> String {
 /// standalone per-instruction file. `source_url` + `name` recompute the block id.
 pub(crate) fn teardown_dest(token: &str, source_url: &str, name: &str, root: &Path) {
     // Only the known `agg:`/`file:` prefixes are stripped — splitting on the
-    // first `:` would mangle an absolute Windows destination (`C:\…`), which
+    // first `:` would mangle an absolute Windows destination (`C:\...`), which
     // `relativize_dest` stores verbatim when the dest is outside the scope root.
     if let Some(rel) = token.strip_prefix("agg:") {
         let path = resolve_dest(rel, root);

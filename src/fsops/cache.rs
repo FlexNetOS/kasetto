@@ -64,7 +64,7 @@ pub(crate) fn lookup(key: &str) -> Option<PathBuf> {
 ///
 /// Returns `None` — so the caller falls back to direct extraction — when caching
 /// is disabled **or** the cache scratch dir cannot be prepared (no `HOME`,
-/// read-only `XDG_CACHE_HOME`, …). The cache is an optimization, so an
+/// read-only `XDG_CACHE_HOME`, ...). The cache is an optimization, so an
 /// unwritable cache must never break an otherwise-valid sync.
 pub(crate) fn store<F>(key: &str, extract: F) -> Option<Result<PathBuf>>
 where

@@ -562,7 +562,7 @@ fn find_unmanaged_files(
     out
 }
 
-/// Managed `<!-- kasetto:instruction:ID … -->` blocks in shared aggregate files
+/// Managed `<!-- kasetto:instruction:ID ... -->` blocks in shared aggregate files
 /// whose id the lock no longer tracks (a stale block kasetto left behind). User
 /// prose is never inspected — only kasetto's own markers.
 fn find_orphan_blocks(

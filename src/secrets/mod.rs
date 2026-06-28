@@ -1,6 +1,6 @@
 //! Secret injection for synced MCP configs.
 //!
-//! Resolves `${kst_…}` placeholders at sync time from environment variables and
+//! Resolves `${kst_...}` placeholders at sync time from environment variables and
 //! a `credentials.yaml` store, so packs can ship `Bearer ${kst_vercel_token}`
 //! without committing the value. Injection happens on the in-memory config and
 //! is written only to the agent destination — never to the source cache, the
@@ -45,7 +45,7 @@ impl std::fmt::Debug for Secret {
     }
 }
 
-/// Resolves `${kst_…}` placeholders against an ordered set of sources.
+/// Resolves `${kst_...}` placeholders against an ordered set of sources.
 pub(crate) struct SecretContext {
     sources: Vec<Box<dyn SecretSource>>,
     on_missing: OnMissing,
@@ -95,7 +95,7 @@ impl SecretContext {
             }
         }
 
-        // External managers: only invoked when a matching `${kst:<tag>:…}` ref
+        // External managers: only invoked when a matching `${kst:<tag>:...}` ref
         // appears (their `handles` gates on the tag), so adding them
         // unconditionally costs nothing for env/credentials-only configs. Each
         // shells out to the provider's own CLI, inheriting its session.
@@ -230,7 +230,7 @@ impl SecretContext {
         Ok(None)
     }
 
-    /// The sources that apply to `r`, for the "searched: …" diagnostic.
+    /// The sources that apply to `r`, for the "searched: ..." diagnostic.
     fn searched(&self, r: &SecretRef) -> String {
         let names: Vec<&str> = self
             .sources
