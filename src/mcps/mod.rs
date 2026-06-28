@@ -95,27 +95,22 @@ pub(crate) fn list_server_names(target: &crate::model::McpSettingsTarget) -> Vec
     }
 }
 
+/// Parse `path` as JSON and return the object under `root_key`. `None` when the
+/// file is absent, unparseable, or has no object at `root_key`.
+fn json_object(path: &Path, root_key: &str) -> Option<serde_json::Map<String, serde_json::Value>> {
+    let text = fs::read_to_string(path).ok()?;
+    let val: serde_json::Value = serde_json::from_str(&text).ok()?;
+    val.get(root_key).and_then(|v| v.as_object()).cloned()
+}
+
 fn json_server_names(path: &Path, root_key: &str) -> Vec<String> {
-    let Ok(text) = fs::read_to_string(path) else {
-        return Vec::new();
-    };
-    let Ok(val) = serde_json::from_str::<serde_json::Value>(&text) else {
-        return Vec::new();
-    };
-    val.get(root_key)
-        .and_then(|v| v.as_object())
+    json_object(path, root_key)
         .map(|m| m.keys().cloned().collect())
         .unwrap_or_default()
 }
 
 fn json_all_keys_present(server_names: &[String], path: &Path, root_key: &str) -> bool {
-    let Ok(text) = fs::read_to_string(path) else {
-        return false;
-    };
-    let Ok(val) = serde_json::from_str::<serde_json::Value>(&text) else {
-        return false;
-    };
-    let Some(map) = val.get(root_key).and_then(|v| v.as_object()) else {
+    let Some(map) = json_object(path, root_key) else {
         return false;
     };
     server_names.iter().all(|name| map.contains_key(name))

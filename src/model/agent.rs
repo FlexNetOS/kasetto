@@ -105,21 +105,21 @@ pub(crate) fn all_mcp_project_targets(project_root: &Path) -> Vec<McpSettingsTar
     )
 }
 
-fn dedup_targets(iter: impl Iterator<Item = McpSettingsTarget>) -> Vec<McpSettingsTarget> {
+/// Deduplicate `iter` by the `Path` each item maps to via `key`, returning the
+/// survivors sorted by that path (first occurrence wins).
+fn dedup_by_path<T>(iter: impl Iterator<Item = T>, key: impl Fn(&T) -> &Path) -> Vec<T> {
     let mut seen = std::collections::HashSet::<PathBuf>::new();
-    let mut out: Vec<McpSettingsTarget> = iter.filter(|t| seen.insert(t.path.clone())).collect();
-    out.sort_by(|x, y| x.path.cmp(&y.path));
+    let mut out: Vec<T> = iter.filter(|t| seen.insert(key(t).to_path_buf())).collect();
+    out.sort_by(|x, y| key(x).cmp(key(y)));
     out
 }
 
+fn dedup_targets(iter: impl Iterator<Item = McpSettingsTarget>) -> Vec<McpSettingsTarget> {
+    dedup_by_path(iter, |t| t.path.as_path())
+}
+
 fn dedup_command_targets(iter: impl Iterator<Item = Option<CommandTarget>>) -> Vec<CommandTarget> {
-    let mut seen = std::collections::HashSet::<PathBuf>::new();
-    let mut out: Vec<CommandTarget> = iter
-        .flatten()
-        .filter(|t| seen.insert(t.path.clone()))
-        .collect();
-    out.sort_by(|x, y| x.path.cmp(&y.path));
-    out
+    dedup_by_path(iter.flatten(), |t| t.path.as_path())
 }
 
 /// Deduped global command directories for every known agent.
@@ -148,22 +148,13 @@ pub(crate) fn command_project_targets(project_root: &Path, agents: &[Agent]) -> 
 }
 
 fn dedup_paths(iter: impl Iterator<Item = PathBuf>) -> Vec<PathBuf> {
-    let mut seen = std::collections::HashSet::<PathBuf>::new();
-    let mut out: Vec<PathBuf> = iter.filter(|p| seen.insert(p.clone())).collect();
-    out.sort();
-    out
+    dedup_by_path(iter, |p| p.as_path())
 }
 
 fn dedup_instruction_targets(
     iter: impl Iterator<Item = Option<InstructionTarget>>,
 ) -> Vec<InstructionTarget> {
-    let mut seen = std::collections::HashSet::<PathBuf>::new();
-    let mut out: Vec<InstructionTarget> = iter
-        .flatten()
-        .filter(|t| seen.insert(t.path.clone()))
-        .collect();
-    out.sort_by(|x, y| x.path.cmp(&y.path));
-    out
+    dedup_by_path(iter.flatten(), |t| t.path.as_path())
 }
 
 /// Deduped skill install directories for a specific set of agents — `doctor`
