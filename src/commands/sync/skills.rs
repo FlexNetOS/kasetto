@@ -3,9 +3,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::error::{err, Result};
-use crate::fsops::{
-    copy_dir, hash_dir, now_unix, now_unix_str, select_targets, BrokenSkill,
-};
+use crate::fsops::{copy_dir, hash_dir, now_unix, now_unix_str, select_targets, BrokenSkill};
 use crate::model::{Action, SkillEntry, SkillsField, SourceSpec, State};
 use crate::profile::read_skill_profile_from_dir;
 use crate::source::materialize_source;
