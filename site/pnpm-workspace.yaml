@@ -7,4 +7,6 @@ onlyBuiltDependencies:
   - sharp
 
 overrides:
+  dompurify: ">=3.4.11"
+  js-yaml: "4.2.0"
   postcss@<8.5.10: ">=8.5.10"

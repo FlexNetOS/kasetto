@@ -18,6 +18,10 @@ keywords = [
 ]
 default-run = "kasetto"
 
+# Keep this package self-rooted when it is checked out under a meta-managed
+# worktree directory that may itself contain a Cargo workspace manifest.
+[workspace]
+
 [[bin]]
 name = "kasetto"
 path = "src/main.rs"
