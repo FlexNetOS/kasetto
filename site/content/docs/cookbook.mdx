@@ -53,8 +53,8 @@ kst add https://github.com/anthropics/skills@v1.2.0
 # Add named skills from a multi-pack repo (kind-tagged, repeatable).
 kst add https://github.com/example/repo --skill code-reviewer --skill find-skills
 
-# Touch several sections in one edit — skills + MCPs + commands together.
-kst add https://github.com/example/repo --skill find --mcp github --command review
+# Touch several sections in one edit — skills + MCPs + commands + instructions together.
+kst add https://github.com/example/repo --skill find --mcp github --command review --instruction conventions
 
 # Preview the edit without writing kasetto.yaml or running sync.
 kst add https://github.com/example/repo --dry-run
@@ -130,7 +130,7 @@ skills:
     skills: "*"
 ```
 
-Top-level scalars (`scope`, `agent`, `destination`) replace. `skills` and `mcps` merge by `(source, ref-or-branch, sub-dir)` identity. See [Configuration → Extending Another Config](/docs/configuration#extending-another-config) for the full merge-rules table.
+Top-level scalars (`scope`, `agent`, `destination`) replace. `skills` and `mcps` merge by `(source, ref-or-branch, sub-dir)` identity. See [Configuration → Extending Another Config](/docs/configuration#extending-another-config) for the full merge-instructions table.
 
 ## Monorepo: Project Scope Per Workspace
 

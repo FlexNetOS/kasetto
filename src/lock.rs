@@ -25,6 +25,15 @@ pub(crate) struct AssetEntry {
     /// when this is empty.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub source_revision: String,
+    /// `true` for MCP packs that carry `${kst...}` secret placeholders. Lets the
+    /// no-fetch skip path hint that a rotated secret needs `--update` to
+    /// re-resolve. Omitted when false so non-secret locks stay byte-identical.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub has_secrets: bool,
+}
+
+fn is_false(b: &bool) -> bool {
+    !*b
 }
 
 /// Portable, commit-friendly manifest (`kasetto.lock`) of installed skills and assets.
@@ -107,6 +116,18 @@ impl LockFile {
         names
     }
 
+    pub(crate) fn list_installed_instructions(&self) -> Vec<String> {
+        let mut names: Vec<String> = self
+            .assets
+            .iter()
+            .filter(|(_, a)| a.kind == "instructions")
+            .map(|(_, a)| a.name.clone())
+            .collect();
+        names.sort();
+        names.dedup();
+        names
+    }
+
     pub(crate) fn list_installed_mcps(&self) -> Vec<String> {
         let mut servers: Vec<String> = self
             .list_tracked_asset_ids("mcp")
@@ -176,7 +197,7 @@ mod tests {
         save_lock(&mut lock, Scope::Project, &dir).unwrap();
 
         let loaded = load_lock(Scope::Project, &dir).unwrap();
-        assert_eq!(loaded.version, 2);
+        assert_eq!(loaded.version, 3);
         assert!(loaded.skills.is_empty());
         assert!(loaded.assets.is_empty());
 
@@ -210,6 +231,7 @@ mod tests {
                 source: "src".into(),
                 destination: "srv1,srv2".into(),
                 source_revision: "rev1".into(),
+                has_secrets: false,
             },
         );
 
@@ -258,7 +280,7 @@ assets: {}\n";
 
         save_lock(&mut loaded, Scope::Project, &dir).unwrap();
         let resaved = fs::read_to_string(dir.join(LOCK_FILENAME)).unwrap();
-        assert!(resaved.starts_with("version: 2"));
+        assert!(resaved.starts_with("version: 3"));
         assert!(!resaved.contains("last_run"));
         assert!(!resaved.contains("latest_report"));
         assert!(!resaved.contains("updated_at"));
@@ -272,7 +294,7 @@ assets: {}\n";
         fs::create_dir_all(&dir).unwrap();
 
         let lock = load_lock(Scope::Project, &dir).unwrap();
-        assert_eq!(lock.version, 2);
+        assert_eq!(lock.version, 3);
         assert!(lock.skills.is_empty());
 
         let _ = fs::remove_dir_all(&dir);
@@ -326,6 +348,7 @@ assets: {}\n";
             source: "s".into(),
             destination: destination.into(),
             source_revision: "rev".into(),
+            has_secrets: false,
         }
     }
 

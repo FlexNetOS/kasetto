@@ -83,6 +83,7 @@ pub(crate) enum ListKind {
     Skills,
     Mcps,
     Commands,
+    Instructions,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, ValueEnum)]
@@ -139,6 +140,12 @@ pub(crate) struct SyncArgs {
     #[arg(long, visible_alias = "frozen")]
     #[arg(help = "fail if the lock cannot satisfy the config; never fetch (CI-friendly)")]
     pub locked: bool,
+    #[arg(long)]
+    #[arg(
+        help = "warn instead of failing when a ${kst_...} secret can't be resolved",
+        long_help = "By default an unresolved `${kst_name}` placeholder in an MCP config marks that entry broken and exits non-zero. With this flag, kasetto warns and writes the literal placeholder instead."
+    )]
+    pub allow_missing_secrets: bool,
     #[command(flatten)]
     pub scope: ScopeArgs,
 }
@@ -222,7 +229,7 @@ pub(crate) enum Commands {
     },
     #[command(
         about = "Add a source to the config and sync it",
-        long_about = "Append a skill/MCP/command source to your local kasetto.yaml (preserving comments), then run a sync to install it.\n\nUse the kind-tagged flags --skill / --mcp / --command (each repeatable) to name entries; a single add can touch several lists at once when a repo ships more than one kind. A lone `*` value (e.g. --skill \"*\") is a wildcard. With no kind flags, the source is added as `skills: \"*\"`.\n\nThe source may be a repo URL or a deep blob/tree browse URL — the latter is decomposed into source + ref/branch + sub-dir (and the skill name for a SKILL.md link). Explicit --ref / --branch / --sub-dir override the derived pieces.\n\nThe source is fetched once up front to verify it resolves (skip with --no-verify). Use --no-sync to edit the config without installing.",
+        long_about = "Append a skill/MCP/command/instruction source to your local kasetto.yaml (preserving comments), then run a sync to install it.\n\nUse the kind-tagged flags --skill / --mcp / --command / --instruction (each repeatable) to name entries; a single add can touch several lists at once when a repo ships more than one kind. A lone `*` value (e.g. --skill \"*\") is a wildcard. With no kind flags, the source is added as `skills: \"*\"`.\n\nThe source may be a repo URL or a deep blob/tree browse URL — the latter is decomposed into source + ref/branch + sub-dir (and the skill name for a SKILL.md link). Explicit --ref / --branch / --sub-dir override the derived pieces.\n\nThe source is fetched once up front to verify it resolves (skip with --no-verify). Use --no-sync to edit the config without installing.",
         after_help = crate::cli_examples!(
             "kasetto add https://github.com/example/skill-pack",
             "kasetto add https://github.com/example/pack@v2.0",
@@ -246,6 +253,9 @@ pub(crate) enum Commands {
         #[arg(long = "command", value_name = "NAME")]
         #[arg(help = "command name to add (repeatable; \"*\" for all)")]
         command: Vec<String>,
+        #[arg(long = "instruction", value_name = "NAME")]
+        #[arg(help = "instruction name to add (repeatable; \"*\" for all)")]
+        instruction: Vec<String>,
         #[arg(long = "ref", value_name = "REF", conflicts_with = "branch")]
         #[arg(help = "pin to a git tag, commit SHA, or ref")]
         git_ref: Option<String>,
@@ -281,7 +291,7 @@ pub(crate) enum Commands {
     #[command(
         visible_alias = "rm",
         about = "Remove a source or named entries from the config and prune them",
-        long_about = "Delete entries from your local kasetto.yaml (preserving comments), then run a sync so the now-unconfigured assets are removed from disk and the lock.\n\nMirrors `add`: the kind-tagged flags --skill / --mcp / --command (each repeatable) name entries to subtract from a list; when the last name goes, the whole entry is dropped. A lone `*` value (e.g. --mcp \"*\") drops that kind's whole entry. With no kind flags, the source is removed from every list it appears in.\n\nThe source may be a repo URL or a deep blob/tree browse URL. When multiple entries share a source URL, pass --ref or --branch to pick one. Use --no-sync to edit the config without pruning.",
+        long_about = "Delete entries from your local kasetto.yaml (preserving comments), then run a sync so the now-unconfigured assets are removed from disk and the lock.\n\nMirrors `add`: the kind-tagged flags --skill / --mcp / --command / --instruction (each repeatable) name entries to subtract from a list; when the last name goes, the whole entry is dropped. A lone `*` value (e.g. --mcp \"*\") drops that kind's whole entry. With no kind flags, the source is removed from every list it appears in.\n\nThe source may be a repo URL or a deep blob/tree browse URL. When multiple entries share a source URL, pass --ref or --branch to pick one. Use --no-sync to edit the config without pruning.",
         after_help = crate::cli_examples!(
             "kasetto remove https://github.com/example/skill-pack",
             "kasetto remove https://github.com/example/pack@v2.0",
@@ -305,6 +315,9 @@ pub(crate) enum Commands {
         #[arg(long = "command", value_name = "NAME")]
         #[arg(help = "command name to remove (repeatable; \"*\" drops the whole entry)")]
         command: Vec<String>,
+        #[arg(long = "instruction", value_name = "NAME")]
+        #[arg(help = "instruction name to remove (repeatable; \"*\" drops the whole entry)")]
+        instruction: Vec<String>,
         #[arg(long = "ref", value_name = "REF", conflicts_with = "branch")]
         #[arg(help = "disambiguate by pinned ref")]
         git_ref: Option<String>,
@@ -372,8 +385,8 @@ pub(crate) enum Commands {
         scope: ScopeArgs,
     },
     #[command(
-        about = "List installed skills, MCPs, and commands",
-        long_about = "Read installed assets from the lock file and print them as plain tables.\n\nFilter the output with `--type skills|mcps|commands|all` (default: all). Use --json for scripting.",
+        about = "List installed skills, MCPs, commands, and instructions",
+        long_about = "Read installed assets from the lock file and print them as plain tables.\n\nFilter the output with `--type skills|mcps|commands|instructions|all` (default: all). Use --json for scripting.",
         after_help = crate::cli_examples!(
             "kasetto list",
             "kasetto list --type skills",

@@ -3,6 +3,7 @@ import { GoStar } from "react-icons/go";
 import { AgentsGrid } from "./components/agents-grid";
 import { CopyButton } from "./components/copy-button";
 import { ConfigExample, FeatureList } from "./components/feature-tabs";
+import { SecretSources } from "./components/secret-sources";
 import { HeroTerminal } from "./components/hero-terminal";
 import { ScrollCue } from "./components/scroll-cue";
 
@@ -17,7 +18,7 @@ const INSTALL = [
   },
   {
     label: "HOMEBREW",
-    cmd: "brew install pivoshenko/tap/kasetto",
+    cmd: "brew tap pivoshenko/tap\nbrew trust pivoshenko/tap\nbrew install kasetto",
   },
   {
     label: "CARGO",
@@ -162,7 +163,11 @@ export default async function Page() {
         <FeatureList />
       </Track>
 
-      <Track num="A3" title="EXAMPLE">
+      <Track num="A3" title="SECRET SOURCES">
+        <SecretSources />
+      </Track>
+
+      <Track num="A4" title="EXAMPLE">
         <ConfigExample />
       </Track>
 

@@ -1,4 +1,5 @@
 mod commands;
+mod instructions;
 mod mcps;
 mod skills;
 
@@ -36,6 +37,8 @@ pub(super) struct SyncContext<'a> {
     pub(super) update_only: Vec<String>,
     /// `--locked`/`--frozen`: never fetch; error if the lock cannot satisfy the config.
     pub(super) locked: bool,
+    /// Resolves `${kst_...}` secret placeholders in MCP configs at write time.
+    pub(super) secrets: crate::secrets::SecretContext,
 }
 
 /// Bundle of the mutable bookkeeping state threaded through the skill sync
@@ -102,6 +105,7 @@ pub(crate) struct SyncOptions<'a> {
     pub update: bool,
     pub update_only: Vec<String>,
     pub locked: bool,
+    pub allow_missing_secrets: bool,
 }
 
 pub(crate) fn run(opts: &SyncOptions) -> Result<()> {
@@ -129,6 +133,13 @@ pub(crate) fn run(opts: &SyncOptions) -> Result<()> {
         }
     }
 
+    let secrets = crate::secrets::SecretContext::from_config(
+        cfg.secrets.as_ref(),
+        &cfg_dir,
+        opts.allow_missing_secrets,
+        opts.plain,
+    )?;
+
     let ctx = SyncContext {
         cfg: &cfg,
         cfg_dir: &cfg_dir,
@@ -143,6 +154,7 @@ pub(crate) fn run(opts: &SyncOptions) -> Result<()> {
         update: opts.update,
         update_only: opts.update_only.clone(),
         locked: opts.locked,
+        secrets,
     };
 
     let mut lock = load_lock(scope, &cfg_dir)?;
@@ -161,7 +173,8 @@ pub(crate) fn run(opts: &SyncOptions) -> Result<()> {
         skills::sync_skills(&ctx, &mut sm)?;
     }
     commands::sync_commands(&ctx, &mut lock, &mut summary, &mut actions)?;
-    mcps::sync_mcps(&ctx, &mut lock, &mut summary, &mut actions)?;
+    instructions::sync_instructions(&ctx, &mut lock, &mut summary, &mut actions)?;
+    let secrets_need_update = mcps::sync_mcps(&ctx, &mut lock, &mut summary, &mut actions)?;
 
     if !opts.dry_run {
         lock.apply_state(&state);
@@ -190,6 +203,15 @@ pub(crate) fn run(opts: &SyncOptions) -> Result<()> {
         print_resolution_header(&report, opts.plain);
         print_sync_tree(&report, opts.plain);
         print_sync_summary(&report, opts.plain, opts.verbose, elapsed, opts.locked);
+        // A plain sync never re-resolves secrets for an unchanged server, so a
+        // token rotated in env/credentials/op won't propagate until `--update`.
+        if secrets_need_update {
+            crate::ui::print_tip(
+                "some synced MCP servers carry secrets; a plain sync won't re-resolve a \
+                 rotated secret — run `kst sync --update` to push changes",
+                opts.plain,
+            );
+        }
     }
 
     if report.summary.failed > 0 {

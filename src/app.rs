@@ -43,6 +43,7 @@ pub fn run() -> Result<()> {
                     update,
                     update_only,
                     locked: sync.locked,
+                    allow_missing_secrets: sync.allow_missing_secrets,
                 })
             }
             Commands::Add {
@@ -50,6 +51,7 @@ pub fn run() -> Result<()> {
                 skill,
                 mcp,
                 command,
+                instruction,
                 git_ref,
                 branch,
                 sub_dir,
@@ -66,6 +68,7 @@ pub fn run() -> Result<()> {
                 skills: &skill,
                 mcps: &mcp,
                 commands: &command,
+                instructions: &instruction,
                 git_ref: git_ref.as_deref(),
                 branch: branch.as_deref(),
                 sub_dir: sub_dir.as_deref(),
@@ -84,6 +87,7 @@ pub fn run() -> Result<()> {
                 skill,
                 mcp,
                 command,
+                instruction,
                 git_ref,
                 branch,
                 sub_dir,
@@ -99,6 +103,7 @@ pub fn run() -> Result<()> {
                 skills: &skill,
                 mcps: &mcp,
                 commands: &command,
+                instructions: &instruction,
                 git_ref: git_ref.as_deref(),
                 branch: branch.as_deref(),
                 sub_dir: sub_dir.as_deref(),

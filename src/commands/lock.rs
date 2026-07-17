@@ -22,7 +22,7 @@ use std::time::Instant;
 use crate::colors::{ACCENT, ATTENTION, ERROR, RESET, SECONDARY, SUCCESS};
 use crate::error::{err, Result};
 use crate::fsops::{
-    hash_dir, load_config_any, now_unix, relativize_dest, resolve_destinations, scope_root,
+    hash_dir, join_dest_csv, load_config_any, now_unix, resolve_destinations, scope_root,
     select_targets,
 };
 use crate::lock::{load_lock, save_lock, LockFile};
@@ -95,12 +95,11 @@ pub(crate) fn run(opts: &LockOptions) -> Result<()> {
             }
             for (name, dir) in targets {
                 let hash = hash_dir(&dir)?;
-                let dest = destinations[0].join(&name);
                 let (_, description) = read_skill_profile_from_dir(&dir, &name);
                 new_skills.insert(
                     format!("{}::{}", src.source, name),
                     SkillEntry {
-                        destination: relativize_dest(&dest, &root),
+                        destination: join_dest_csv(&destinations, &name, &root),
                         hash,
                         skill: name.clone(),
                         description,
@@ -192,6 +191,9 @@ fn refresh_asset_revisions(lock: &mut LockFile, cfg: &Config) {
     }
     for c in &cfg.commands {
         rev_by_source.insert(c.source.clone(), c.as_source_spec().expected_revision());
+    }
+    for r in &cfg.instructions {
+        rev_by_source.insert(r.source.clone(), r.as_source_spec().expected_revision());
     }
     for asset in lock.assets.values_mut() {
         if let Some(rev) = rev_by_source.get(&asset.source) {

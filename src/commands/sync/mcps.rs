@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use crate::error::{err, Result};
 use crate::fsops::{
@@ -24,21 +24,35 @@ use super::{
 struct PendingMcp {
     source: String,
     file_name: String,
-    mcp_path: PathBuf,
+    /// The pack's `mcpServers` object, already secret-injected in phase 1.
+    servers: serde_json::Map<String, serde_json::Value>,
     hash: String,
     server_names: Vec<String>,
     asset_id: String,
     is_new: bool,
+    /// Replace an existing same-named server on merge (the `--update` rotation
+    /// path for secret-bearing packs).
+    overwrite: bool,
+    /// Pack carries `${kst...}` placeholders — recorded in the lock so the skip
+    /// path can hint that rotation needs `--update`, and used to perms-check the
+    /// destination after a plaintext secret is written.
+    has_secrets: bool,
     source_revision: String,
 }
 
+/// Returns `true` when a secret-bearing pack was left unchanged without
+/// `--update`, so the caller can hint (after the summary) that a rotated secret
+/// won't propagate on a plain sync.
 pub(super) fn sync_mcps(
     ctx: &SyncContext,
     lock: &mut LockFile,
     summary: &mut Summary,
     actions: &mut Vec<Action>,
-) -> Result<()> {
+) -> Result<bool> {
     let mut desired_mcp_ids = HashSet::new();
+    // Set when a secret-bearing pack is left unchanged without `--update`, so we
+    // can hint that a rotated secret won't propagate on a plain sync.
+    let mut secrets_need_update = false;
     let mcp_settings_list = resolve_mcp_settings_targets(ctx.cfg, ctx.scope, ctx.cfg_dir)?;
 
     // No agents configured (e.g. user dropped `agent:`) but lock still has MCP
@@ -63,7 +77,7 @@ pub(super) fn sync_mcps(
                 &fallback_targets,
             );
         }
-        return Ok(());
+        return Ok(false);
     }
 
     // Phase 1: discover and classify all MCP entries
@@ -89,13 +103,11 @@ pub(super) fn sync_mcps(
             }
         }
 
-        // Selective `--update <name>` accepts either the file name (`github.json`)
-        // or the bare stem (`github`), matching how skills/commands use bare names.
+        // Whether any file in this source is targeted by `--update` — drives the
+        // fetch decision (a moving source must be re-downloaded once).
         let update_names: Vec<String> = desired_file_names
             .iter()
-            .flat_map(|f| {
-                std::iter::once(f.clone()).chain(f.strip_suffix(".json").map(str::to_string))
-            })
+            .flat_map(|f| update_aliases(f))
             .collect();
         let update_active = update_active_for_source(ctx, &update_names);
         let fetch = update_active
@@ -120,6 +132,9 @@ pub(super) fn sync_mcps(
             let mut first_in_run = true;
             for file_name in &desired_file_names {
                 let asset_id = format!("mcp::{}::{}", src.source, file_name);
+                if lock.assets.get(&asset_id).is_some_and(|a| a.has_secrets) {
+                    secrets_need_update = true;
+                }
                 desired_mcp_ids.insert(asset_id);
                 let label = sync_label_with(file_name, &src.source, ctx.plain, first_in_run);
                 first_in_run = false;
@@ -151,10 +166,11 @@ pub(super) fn sync_mcps(
                 continue;
             }
         };
-        let root = materialized
-            .cleanup_dir
-            .as_deref()
-            .unwrap_or_else(|| std::path::Path::new(&src.source));
+        // Resolve MCP files against the materialized source root. `source_root`
+        // is correct for every case — a local path, a freshly-staged remote, and
+        // a cache-served `ref:` source (which has no stage dir, so `cleanup_dir`
+        // is `None`). `cleanup_dir` is only a teardown handle, never the root.
+        let root = materialized.source_root.as_path();
         let resolve_result: Result<Vec<PathBuf>> = match &src.mcps {
             McpsField::Wildcard(s) if s == "*" => discover_mcps(root),
             McpsField::Wildcard(s) => Err(err(format!(
@@ -218,34 +234,42 @@ pub(super) fn sync_mcps(
         let mut first_in_run = true;
         for mcp_path in &mcps {
             let file_name = file_name_str(mcp_path);
-            let file_name_for_err = file_name.clone();
             let row_first = first_in_run;
             first_in_run = false;
-            let r: std::result::Result<(), crate::error::Error> = (|| {
-                let hash = hash_file(mcp_path)?;
-                let mcp_text = fs::read_to_string(mcp_path)?;
-                let mcp_val: serde_json::Value = serde_json::from_str(&mcp_text)?;
-                let server_names: Vec<String> = mcp_val
-                    .get("mcpServers")
-                    .and_then(|v| v.as_object())
-                    .map(|m| m.keys().cloned().collect())
-                    .unwrap_or_default();
-
-                let asset_id = format!("mcp::{}::{}", src.source, file_name);
-                desired_mcp_ids.insert(asset_id.clone());
-
-                let existing = lock.get_tracked_asset("mcp", &asset_id);
-                let is_unchanged = existing
-                    .as_ref()
-                    .map(|(h, _)| {
-                        h == &hash
-                            && mcp_settings_list
-                                .iter()
-                                .all(|target| servers_present_in_settings(&server_names, target))
-                    })
-                    .unwrap_or(false);
-
-                if is_unchanged {
+            // Scope `--update <name>` to the file actually named. A source can
+            // hold several MCP files; rotating one (force-remerge with overwrite)
+            // must not clobber hand-edited servers from the source's other files.
+            let file_update = update_active_for_source(ctx, &update_aliases(&file_name));
+            let classified = classify_mcp_file(
+                ctx,
+                lock,
+                &mcp_settings_list,
+                &src.source,
+                mcp_path,
+                file_update,
+                &materialized.source_revision,
+            );
+            let (asset_id, outcome) = match classified {
+                Ok(c) => c,
+                Err(e) => {
+                    // A malformed/unreadable file is `broken` (exit 0), distinct
+                    // from an unresolved secret below.
+                    summary.broken += 1;
+                    actions.push(Action {
+                        source: Some(src.source.clone()),
+                        skill: Some(format!("mcp:{file_name}")),
+                        status: "broken".into(),
+                        error: Some(e.to_string()),
+                    });
+                    continue;
+                }
+            };
+            desired_mcp_ids.insert(asset_id);
+            match outcome {
+                McpFileOutcome::Unchanged { has_secrets } => {
+                    if has_secrets {
+                        secrets_need_update = true;
+                    }
                     let label = sync_label_with(&file_name, &src.source, ctx.plain, row_first);
                     with_spinner_transient(ctx.animate, ctx.plain, &label, || {
                         summary.unchanged += 1;
@@ -257,28 +281,19 @@ pub(super) fn sync_mcps(
                         });
                         Ok(())
                     })?;
-                } else {
-                    pending.push(PendingMcp {
-                        source: src.source.clone(),
-                        file_name,
-                        mcp_path: mcp_path.clone(),
-                        hash,
-                        server_names,
-                        asset_id,
-                        is_new: existing.is_none(),
-                        source_revision: materialized.source_revision.clone(),
+                }
+                McpFileOutcome::SecretError(e) => {
+                    // Missing required secret: hard failure (non-zero exit),
+                    // nothing written — never to a destination, cache, or lock.
+                    summary.failed += 1;
+                    actions.push(Action {
+                        source: Some(src.source.clone()),
+                        skill: Some(format!("mcp:{file_name}")),
+                        status: "source_error".into(),
+                        error: Some(e),
                     });
                 }
-                Ok(())
-            })();
-            if let Err(e) = r {
-                summary.broken += 1;
-                actions.push(Action {
-                    source: Some(src.source.clone()),
-                    skill: Some(format!("mcp:{file_name_for_err}")),
-                    status: "broken".into(),
-                    error: Some(e.to_string()),
-                });
+                McpFileOutcome::Install(pmcp) => pending.push(*pmcp),
             }
         }
         // Defer cleanup so mcp_path references remain valid
@@ -305,7 +320,110 @@ pub(super) fn sync_mcps(
         );
     }
 
-    Ok(())
+    Ok(secrets_need_update)
+}
+
+/// Names a `--update <name>` accepts for an MCP file: the file name itself
+/// (`github.json`) and its bare stem (`github`), matching how skills/commands
+/// match names.
+fn update_aliases(file_name: &str) -> Vec<String> {
+    std::iter::once(file_name.to_string())
+        .chain(file_name.strip_suffix(".json").map(str::to_string))
+        .collect()
+}
+
+/// Outcome of classifying one MCP file against the lock and current settings.
+enum McpFileOutcome {
+    /// Already installed and identical — nothing to write.
+    Unchanged { has_secrets: bool },
+    /// A required secret could not be resolved — hard failure, non-zero exit.
+    SecretError(String),
+    /// Needs install/update — carries the prepared, secret-injected entry
+    /// (boxed to keep the enum small).
+    Install(Box<PendingMcp>),
+}
+
+/// Hash, parse, and (on the merge path) secret-inject one MCP file, deciding
+/// whether it is unchanged or a pending install. Returns the asset id plus the
+/// outcome; `Err` means a malformed/unreadable file (the caller marks it
+/// broken). Side effects — summary counts, lock writes, desired-id tracking —
+/// stay with the caller so this stays a pure classification step.
+fn classify_mcp_file(
+    ctx: &SyncContext,
+    lock: &LockFile,
+    mcp_settings_list: &[McpSettingsTarget],
+    source: &str,
+    mcp_path: &Path,
+    update_active: bool,
+    source_revision: &str,
+) -> Result<(String, McpFileOutcome)> {
+    // `update_active` here is scoped to *this* file (see the caller): true only
+    // when a plain `--update` ran or `--update <name>` named this file.
+    let file_name = file_name_str(mcp_path);
+    let hash = hash_file(mcp_path)?;
+    let mcp_text = fs::read_to_string(mcp_path)?;
+    let mcp_val: serde_json::Value = serde_json::from_str(&mcp_text)?;
+    let mut servers: serde_json::Map<String, serde_json::Value> = mcp_val
+        .get("mcpServers")
+        .and_then(|v| v.as_object())
+        .cloned()
+        .unwrap_or_default();
+    let server_names: Vec<String> = servers.keys().cloned().collect();
+    // Only the `mcpServers` object is injected, so detect placeholders there —
+    // not anywhere in the file. A `${kst_...}` in some other key would otherwise
+    // raise a spurious world-readable warning and `--update` tip for a file that
+    // gets no secret written.
+    let has_secrets = serde_json::to_string(&servers)
+        .map(|s| crate::secrets::has_placeholder(&s))
+        .unwrap_or(false);
+
+    let asset_id = format!("mcp::{source}::{file_name}");
+    let existing = lock.get_tracked_asset("mcp", &asset_id);
+
+    // A secret-bearing pack under `--update` is re-merged even when the
+    // placeholder source is byte-identical, so a rotated secret (changed only in
+    // env/credentials.yaml) propagates.
+    let force_remerge = update_active && has_secrets;
+    let is_unchanged = !force_remerge
+        && existing
+            .as_ref()
+            .map(|(h, _)| {
+                h == &hash
+                    && mcp_settings_list
+                        .iter()
+                        .all(|target| servers_present_in_settings(&server_names, target))
+            })
+            .unwrap_or(false);
+    if is_unchanged {
+        return Ok((asset_id, McpFileOutcome::Unchanged { has_secrets }));
+    }
+
+    // Inject secrets only on the merge path. A missing required secret is a hard
+    // failure (source_error → non-zero exit), distinct from a malformed file.
+    if has_secrets {
+        let mut wrap = serde_json::Value::Object(std::mem::take(&mut servers));
+        if let Err(e) = ctx.secrets.inject_value(&mut wrap) {
+            return Ok((asset_id, McpFileOutcome::SecretError(e.to_string())));
+        }
+        if let serde_json::Value::Object(m) = wrap {
+            servers = m;
+        }
+    }
+
+    let is_new = existing.is_none();
+    let pending = PendingMcp {
+        source: source.to_string(),
+        file_name,
+        servers,
+        hash,
+        server_names,
+        asset_id: asset_id.clone(),
+        is_new,
+        overwrite: force_remerge,
+        has_secrets,
+        source_revision: source_revision.to_string(),
+    };
+    Ok((asset_id, McpFileOutcome::Install(Box::new(pending))))
 }
 
 /// Desired MCP file names for a source, derived without any network access.
@@ -445,7 +563,12 @@ fn apply_pending(
 
             if !ctx.dry_run {
                 for target in mcp_settings_list {
-                    merge_mcp_config(&p.mcp_path, target)?;
+                    merge_mcp_config(&p.servers, target, p.overwrite)?;
+                    // A resolved plaintext secret now lives in this file; warn if
+                    // it is group/world-readable (symmetric to credentials.yaml).
+                    if p.has_secrets {
+                        crate::secrets::warn_if_world_readable(&target.path, ctx.plain);
+                    }
                 }
                 let servers_csv = p.server_names.join(",");
                 lock.save_tracked_asset(
@@ -457,6 +580,7 @@ fn apply_pending(
                         source: p.source.clone(),
                         destination: servers_csv,
                         source_revision: p.source_revision.clone(),
+                        has_secrets: p.has_secrets,
                     },
                 );
             }
@@ -541,21 +665,25 @@ mod tests {
         let new_entry = PendingMcp {
             source: "https://github.com/org/pack".into(),
             file_name: "mcp.json".into(),
-            mcp_path: PathBuf::from("/tmp/mcp.json"),
+            servers: serde_json::Map::new(),
             hash: "abc123".into(),
             server_names: vec!["server-a".into(), "server-b".into()],
             asset_id: "mcp::source::mcp.json".into(),
             is_new: true,
+            overwrite: false,
+            has_secrets: false,
             source_revision: "branch:main".into(),
         };
         let update_entry = PendingMcp {
             source: "https://github.com/org/pack".into(),
             file_name: "other.json".into(),
-            mcp_path: PathBuf::from("/tmp/other.json"),
+            servers: serde_json::Map::new(),
             hash: "def456".into(),
             server_names: vec!["server-c".into()],
             asset_id: "mcp::source::other.json".into(),
             is_new: false,
+            overwrite: false,
+            has_secrets: false,
             source_revision: "branch:main".into(),
         };
 
@@ -577,11 +705,13 @@ mod tests {
         let update_only = [PendingMcp {
             source: "https://github.com/org/pack".into(),
             file_name: "mcp.json".into(),
-            mcp_path: PathBuf::from("/tmp/mcp.json"),
+            servers: serde_json::Map::new(),
             hash: "abc123".into(),
             server_names: vec!["existing-server".into()],
             asset_id: "mcp::source::mcp.json".into(),
             is_new: false,
+            overwrite: false,
+            has_secrets: false,
             source_revision: "branch:main".into(),
         }];
 
@@ -615,6 +745,8 @@ mod tests {
             skills: Vec::new(),
             mcps: Vec::new(),
             commands: Vec::new(),
+            instructions: Vec::new(),
+            secrets: None,
         };
         let root = PathBuf::from("/tmp");
         let ctx = SyncContext {
@@ -631,6 +763,7 @@ mod tests {
             update: false,
             update_only: Vec::new(),
             locked: false,
+            secrets: crate::secrets::SecretContext::empty(),
         };
         assert!(
             needs_fetch_mcps(&ctx, &src, &desired, &lock, &no_targets),
@@ -648,11 +781,63 @@ mod tests {
                 source: "https://github.com/org/pack".into(),
                 destination: "server-a".into(),
                 source_revision: "branch:main".into(),
+                has_secrets: false,
             },
         );
         assert!(
             !needs_fetch_mcps(&ctx, &src, &desired, &lock2, &no_targets),
             "present lock asset with no targets needs no fetch"
         );
+    }
+
+    #[test]
+    fn selective_update_is_scoped_per_file_not_per_source() {
+        // `--update vercel` against a source holding both vercel.json and
+        // notion.json must force-remerge only vercel.json — remerging notion.json
+        // (overwrite) would clobber hand-edited servers from a sibling file.
+        let cfg = crate::model::Config {
+            destination: None,
+            scope: Some(crate::model::Scope::Project),
+            agent: None,
+            skills: Vec::new(),
+            mcps: Vec::new(),
+            commands: Vec::new(),
+            instructions: Vec::new(),
+            secrets: None,
+        };
+        let root = PathBuf::from("/tmp");
+        let ctx = SyncContext {
+            cfg: &cfg,
+            cfg_dir: &root,
+            destinations: &[],
+            scope_root: root.clone(),
+            scope: crate::model::Scope::Project,
+            dry_run: false,
+            animate: false,
+            plain: true,
+            as_json: false,
+            quiet: true,
+            update: true,
+            update_only: vec!["vercel".into()],
+            locked: false,
+            secrets: crate::secrets::SecretContext::empty(),
+        };
+
+        // Source-level: the source is targeted (vercel matches), so a fetch happens.
+        let source_names: Vec<String> = ["vercel.json", "notion.json"]
+            .iter()
+            .flat_map(|f| update_aliases(f))
+            .collect();
+        assert!(update_active_for_source(&ctx, &source_names));
+
+        // File-level: only vercel.json is active; notion.json is not.
+        assert!(update_active_for_source(
+            &ctx,
+            &update_aliases("vercel.json")
+        ));
+        assert!(!update_active_for_source(
+            &ctx,
+            &update_aliases("notion.json")
+        ));
     }
 }

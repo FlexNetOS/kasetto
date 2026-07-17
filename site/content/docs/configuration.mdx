@@ -61,6 +61,14 @@ commands:
       - gsd:explore
       - gsd:fast
 
+instructions:
+  # instructions wire CLAUDE.md / .cursor/rules / AGENTS.md etc. from instructions/<name>.{md,mdc}
+  # "*" syncs every instruction; aggregate files (CLAUDE.md, AGENTS.md) get managed blocks
+  - source: https://github.com/pivoshenko/pivoshenko.ai
+    instructions:
+      - docs-autoupdate
+      - multi-agent-dispatch
+
 mcps:
   # names resolve to mcps/<name>.json in the source
   - source: https://github.com/pivoshenko/pivoshenko.ai
@@ -83,6 +91,9 @@ mcps:
 | `scope`       | no       | `"global"` (default) or `"project"` - where to install              |
 | `skills`      | **yes**  | List of skill sources                                               |
 | `mcps`        | no       | List of MCP server sources                                          |
+| `commands`    | no       | List of slash-command sources                                       |
+| `instructions`       | no       | List of instruction sources (CLAUDE.md / .cursor/rules / AGENTS.md ...)      |
+| `secrets`     | no       | Secret-injection policy for `${kst_...}` placeholders (see [Secret Injection](/docs/secrets)) |
 | `extends`     | no       | Path or URL of a parent config to inherit from (string or list)     |
 
 ### Skill Source Fields
@@ -138,12 +149,59 @@ Each entry in the `mcps` list can be a plain string (name) or an object — mirr
 | `- { name: x, path: dir }`        | `dir/x.json`            |
 | `- { name: x, path: nested/dir }` | `nested/dir/x.json`     |
 
-Paths are resolved relative to the source root (or `sub-dir` if set); absolute paths are honored as-is. `.json` is appended automatically when the name has no extension.
+Paths are resolved relative to the source root; absolute paths are honored as-is. `.json` is appended automatically when the name has no extension.
 
 
 MCP config files must contain a `mcpServers` object with server definitions. Servers are merged
 into each agent's native settings file (e.g., `.claude.json` for Claude Code, `.cursor/mcp.json`
 for Cursor). See [how sync works](/docs/how-sync-works) for merge behavior details.
+
+A pack can reference secrets with `${kst_<name>}` placeholders (tokens, passwords, API keys) instead
+of committing them. They're resolved at sync time from the environment or a credentials file — see
+[Secret Injection](/docs/secrets).
+
+### Instruction Source Fields
+
+Instructions wire each agent's instruction file — `CLAUDE.md`, `.cursor/rules/*.mdc`, `AGENTS.md`,
+`.github/copilot-instructions.md`, and so on — from a single source. An instruction is Markdown with
+optional YAML frontmatter, discovered in the source's `instructions/` directory.
+
+| Key       | Required | Description                                                                                    |
+| --------- | -------- | ---------------------------------------------------------------------------------------------- |
+| `source`  | **yes**  | Git host URL or local path containing a `instructions/` directory                                      |
+| `branch`  | no       | Branch for remote sources (default: `main`, falls back to `master`)                            |
+| `ref`     | no       | Git tag, commit SHA, or ref - takes priority over `branch`                                     |
+| `sub-dir` | no       | Relative subdirectory within the source used as the discovery root (`sub_dir` alias supported) |
+| `instructions`   | **yes**  | `"*"` to discover all, or a list of names / `{ name, path }` objects                           |
+
+When `instructions: "*"`, Kasetto walks `instructions/**/*.{md,mdc}` (nested directories namespace with `:`,
+e.g. `house:security`).
+
+### Instruction Entry Fields
+
+Each entry in the `instructions` list can be a plain string (name) or an object — mirrors command entries:
+
+| Form                              | Resolves to                       |
+| --------------------------------- | --------------------------------- |
+| `- style`                         | `instructions/style.{md,mdc}`            |
+| `- house:security`                | `instructions/house/security.{md,mdc}`   |
+| `- { name: x, path: dir }`        | `dir/x.{md,mdc}`                  |
+
+### How Instructions Land Per Agent
+
+Each instruction is transformed into the target agent's native format. Two destination shapes exist:
+
+- **Aggregate file** — many instructions merge into one shared file (`CLAUDE.md`, `AGENTS.md`,
+  `GEMINI.md`, `.github/copilot-instructions.md`, ...). Each instruction is wrapped in a managed
+  `<!-- kasetto:instruction:ID ... -->` comment block, so your own hand-written content and other instructions in
+  the same file are preserved. `remove`/`clean` strip only kasetto's blocks — they never delete the
+  file.
+- **Per-instruction directory** — one file per instruction. Cursor (`.cursor/rules/<name>.mdc`) gets reconstructed
+  MDC frontmatter (`description`, `globs`, `alwaysApply`); other directory agents
+  (`.windsurf/rules`, `.clinerules`, `.continue/rules`, ...) get the Markdown body only.
+
+`globs`/`alwaysApply` are only meaningful for Cursor; they are dropped for agents that don't scope
+instructions. See [supported agents](/docs/agents) for the per-agent destinations.
 
 ## Extending Another Config
 
@@ -166,15 +224,17 @@ extends:
   - https://example.com/team-overlay.yaml
 ```
 
-### Merge rules
+### Merge instructions
 
-| Field         | Rule                                                                                                                          |
+| Field         | Instruction                                                                                                                          |
 | ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | `destination` | Replace - child wins                                                                                                          |
 | `scope`       | Replace - child wins                                                                                                          |
 | `agent`       | Replace - child wins                                                                                                          |
 | `skills`      | Merge by `(source, ref-or-branch, sub-dir)` identity. Same identity replaces; new entries append.                             |
 | `mcps`        | Same as `skills` (`sub-dir` is always empty for MCP sources, so identity is `(source, ref-or-branch)`).                       |
+| `commands`    | Same as `skills`.                                                                                                            |
+| `instructions`       | Same as `skills`.                                                                                                            |
 
 Identity-based merging lets a child *narrow* a parent's `skills: "*"` to a specific list, or pin a different `ref`, while still adding new sources.
 
@@ -210,7 +270,7 @@ If the URL points to a private repository, Kasetto uses the same token-based aut
 
 ## Multiple Agents
 
-The `agent` field accepts a single value or a list. With a list, Kasetto installs skills to every agent's directory and merges MCPs into every agent's settings file:
+The `agent` field accepts a single value or a list. With a list, Kasetto installs skills, commands, and instructions to every agent's directory and merges MCPs into every agent's settings file:
 
 ```yaml
 agent:
@@ -243,10 +303,11 @@ The `--project` / `--global` flags always override whatever `scope` is set in th
 
 ## Environment Variables
 
-These environment variables affect Kasetto's output behavior:
+These environment variables affect Kasetto's behavior:
 
 | Variable          | Effect                                                                                          |
 | ----------------- | ----------------------------------------------------------------------------------------------- |
 | `NO_COLOR`        | Disables colored output. Set to any value.                                                      |
 | `CLICOLOR_FORCE`  | Forces color even when stdout is not a TTY. Set automatically by `--color always`.              |
 | `KASETTO_CONFIG`  | Overrides config discovery to use the exact path or URL (see [Configuration](#configuration)).  |
+| `KASETTO_NO_CACHE`| Disables the on-disk source cache, forcing a fresh download + extract on every fetch. Set to any value. |

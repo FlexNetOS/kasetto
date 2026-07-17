@@ -14,8 +14,43 @@ use std::fs;
 use std::path::{Component, Path, PathBuf};
 
 use crate::error::{err, Result};
-use crate::fsops::resolve_path;
+use crate::fsops::{resolve_path, source_cache_lookup, source_cache_store};
 use crate::model::{GitPin, SourceSpec};
+
+use auth::UrlRequestAuth;
+
+/// Materialize an immutable-ref archive, preferring the on-disk source cache.
+///
+/// - Cache hit → return the cached tree; no cleanup (the cache owns it).
+/// - Miss with caching on → populate the cache, return its tree; no cleanup.
+/// - Caching off → extract into the throwaway `stage`; caller cleans it up.
+fn fetch_ref_cached(
+    url: &str,
+    auth: &UrlRequestAuth,
+    user_source: &str,
+    stage: &Path,
+    sub_dir: Option<&str>,
+) -> Result<(PathBuf, Option<PathBuf>)> {
+    // Sparse extraction stores only the requested sub-tree, so the cache key must
+    // fold in the sub-dir — otherwise two sub-dirs of the same immutable ref would
+    // collide on one entry that holds only the first one's files.
+    let cache_key = match sub_dir {
+        Some(s) => format!("{url}\n{s}"),
+        None => url.to_string(),
+    };
+    if let Some(tree) = source_cache_lookup(&cache_key) {
+        return Ok((tree, None));
+    }
+    match source_cache_store(&cache_key, |tree_dir| {
+        remote::download_extract(url, auth, tree_dir, user_source, sub_dir)
+    }) {
+        Some(result) => Ok((result?, None)),
+        None => {
+            remote::download_extract(url, auth, stage, user_source, sub_dir)?;
+            Ok((stage.to_path_buf(), Some(stage.to_path_buf())))
+        }
+    }
+}
 
 fn repo_name_hint(parsed: &parse::RepoUrl) -> String {
     match parsed {
@@ -78,30 +113,46 @@ pub(crate) fn materialize_source(
         let parsed = parse::parse_repo_url(&src.source)?;
         let pin = src.git_pin();
 
-        let source_revision = match &pin {
+        // Only the requested sub-dir needs extracting; pass it down so a monorepo
+        // tarball is filtered to that sub-tree instead of written out in full.
+        let sub = src.sub_dir.as_deref();
+
+        // `root` is the materialized repository root (the cached tree on a hit,
+        // else the freshly-extracted `stage`); `cleanup_dir` is `Some` only when
+        // `root` is a throwaway stage the caller should delete afterwards.
+        let (root, source_revision, cleanup_dir) = match &pin {
             GitPin::Ref(r) => {
+                // Immutable ref: URL fully determines content, so it is cacheable.
                 let (url, auth) = remote::remote_repo_archive_ref(&parsed, r);
-                remote::download_extract(&url, &auth, stage, &src.source)?;
-                format!("ref:{r}")
+                let (root, cleanup) = fetch_ref_cached(&url, &auth, &src.source, stage, sub)?;
+                (root, format!("ref:{r}"), cleanup)
             }
             GitPin::Branch(b) => {
                 let (url, auth) = remote::remote_repo_archive_branch(&parsed, b);
-                remote::download_extract(&url, &auth, stage, &src.source)?;
-                format!("branch:{b}")
+                remote::download_extract(&url, &auth, stage, &src.source, sub)?;
+                (
+                    stage.to_path_buf(),
+                    format!("branch:{b}"),
+                    Some(stage.to_path_buf()),
+                )
             }
             GitPin::Default => {
                 let (url, auth) = remote::remote_repo_archive_branch(&parsed, "main");
-                remote::download_extract(&url, &auth, stage, &src.source).or_else(|_| {
+                remote::download_extract(&url, &auth, stage, &src.source, sub).or_else(|_| {
                     let (url, auth) = remote::remote_repo_archive_branch(&parsed, "master");
-                    remote::download_extract(&url, &auth, stage, &src.source).map_err(|e2| {
+                    remote::download_extract(&url, &auth, stage, &src.source, sub).map_err(|e2| {
                         err(format!("{e2} (also tried branch `master` after `main`)"))
                     })
                 })?;
-                "branch:main".into()
+                (
+                    stage.to_path_buf(),
+                    "branch:main".into(),
+                    Some(stage.to_path_buf()),
+                )
             }
         };
 
-        let source_root = resolve_source_root(stage, src.sub_dir.as_deref())?;
+        let source_root = resolve_source_root(&root, src.sub_dir.as_deref())?;
         let hint = src
             .sub_dir
             .as_deref()
@@ -115,7 +166,7 @@ pub(crate) fn materialize_source(
             source_revision,
             available,
             source_root,
-            cleanup_dir: Some(stage.to_path_buf()),
+            cleanup_dir,
         })
     } else {
         let root = resolve_path(cfg_dir, &src.source);
@@ -260,23 +311,32 @@ pub(crate) fn discover_commands(root: &Path) -> Result<HashMap<String, PathBuf>>
     if !base.exists() {
         return Ok(out);
     }
-    walk_commands(&base, &base, &mut out)?;
+    walk_md(&base, &base, &["md"], &mut out)?;
     Ok(out)
 }
 
-fn walk_commands(base: &Path, cur: &Path, out: &mut HashMap<String, PathBuf>) -> Result<()> {
+/// Recursively walk `cur`, collecting files whose extension is in `exts` into a
+/// map of `:`-namespaced name (relative path with separators → `:`, stem only)
+/// → path. Shared by command (`md`) and instruction (`md`/`mdc`) discovery.
+fn walk_md(
+    base: &Path,
+    cur: &Path,
+    exts: &[&str],
+    out: &mut HashMap<String, PathBuf>,
+) -> Result<()> {
     for e in fs::read_dir(cur)? {
         let e = e?;
         let path = e.path();
         let ft = e.file_type()?;
         if ft.is_dir() {
-            walk_commands(base, &path, out)?;
+            walk_md(base, &path, exts, out)?;
             continue;
         }
         if !ft.is_file() {
             continue;
         }
-        if path.extension().and_then(|s| s.to_str()) != Some("md") {
+        let ext = path.extension().and_then(|s| s.to_str());
+        if !ext.is_some_and(|ext| exts.contains(&ext)) {
             continue;
         }
         let rel = match path.strip_prefix(base) {
@@ -347,6 +407,71 @@ fn resolve_named_command(root: &Path, name: &str) -> Result<(String, PathBuf)> {
     }
     Err(err(format!(
         "command entry not found: {name} (looked in commands/ with subdir namespaces)"
+    )))
+}
+
+/// Walk `<root>/instructions/**/*.{md,mdc}` and return a map of namespaced name → file path.
+///
+/// Mirrors [`discover_commands`]: subdirectory nesting becomes `:`-separated
+/// namespaces. Both `.md` and `.mdc` (Cursor) sources are picked up.
+pub(crate) fn discover_instructions(root: &Path) -> Result<HashMap<String, PathBuf>> {
+    let mut out = HashMap::new();
+    let base = root.join("instructions");
+    if !base.exists() {
+        return Ok(out);
+    }
+    walk_md(&base, &base, &["md", "mdc"], &mut out)?;
+    Ok(out)
+}
+
+/// Resolve one `InstructionEntry` to a file path.
+///
+/// - `Name("style")` → look up by namespaced name in `discover_instructions`.
+/// - `Obj { name: "style", path: Some("house") }` → `<root>/house/style.{md,mdc}`.
+/// - `Obj { name: "style", path: None }` → look up by namespaced name.
+pub(crate) fn resolve_instruction_entry(
+    root: &Path,
+    entry: &crate::model::InstructionEntry,
+) -> Result<(String, PathBuf)> {
+    match entry {
+        crate::model::InstructionEntry::Name(n) => resolve_named_instruction(root, n),
+        crate::model::InstructionEntry::Obj { name, path } => {
+            let Some(dir) = path else {
+                return resolve_named_instruction(root, name);
+            };
+            let base = root.join(dir);
+            // Accept an explicit extension, else try .md then .mdc.
+            let candidates: Vec<PathBuf> = if name.ends_with(".md") || name.ends_with(".mdc") {
+                vec![base.join(name)]
+            } else {
+                vec![
+                    base.join(format!("{name}.md")),
+                    base.join(format!("{name}.mdc")),
+                ]
+            };
+            for target in &candidates {
+                if target.is_file() {
+                    let derived = name
+                        .trim_end_matches(".mdc")
+                        .trim_end_matches(".md")
+                        .to_string();
+                    return Ok((derived, target.clone()));
+                }
+            }
+            Err(err(format!(
+                "instruction entry not found: {name} in {dir}/ (looked for .md/.mdc)"
+            )))
+        }
+    }
+}
+
+fn resolve_named_instruction(root: &Path, name: &str) -> Result<(String, PathBuf)> {
+    let available = discover_instructions(root)?;
+    if let Some(path) = available.get(name) {
+        return Ok((name.to_string(), path.clone()));
+    }
+    Err(err(format!(
+        "instruction entry not found: {name} (looked in instructions/ with subdir namespaces)"
     )))
 }
 
@@ -598,6 +723,40 @@ mod tests {
         let (name, path) = resolve_command_entry(&root, &entry).unwrap();
         assert_eq!(name, "git:commit");
         assert!(path.ends_with("commands/git/commit.md"));
+
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn discover_instructions_walks_nested_and_picks_mdc() {
+        let root = temp_dir("kasetto-instruction-disc");
+        let nested = root.join("instructions/house");
+        fs::create_dir_all(&nested).unwrap();
+        fs::write(root.join("instructions/style.md"), "---\n---\nbody\n").unwrap();
+        fs::write(nested.join("security.mdc"), "x").unwrap();
+        fs::write(root.join("instructions/not-md.txt"), "ignored").unwrap();
+
+        let map = discover_instructions(&root).unwrap();
+        assert_eq!(map.len(), 2);
+        assert!(map.contains_key("style"));
+        assert!(map.contains_key("house:security"));
+
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn resolve_instruction_entry_obj_with_path_tries_mdc() {
+        let root = temp_dir("kasetto-instruction-obj");
+        fs::create_dir_all(root.join("house")).unwrap();
+        fs::write(root.join("house/style.mdc"), "x").unwrap();
+
+        let entry = crate::model::InstructionEntry::Obj {
+            name: "style".to_string(),
+            path: Some("house".to_string()),
+        };
+        let (name, path) = resolve_instruction_entry(&root, &entry).unwrap();
+        assert_eq!(name, "style");
+        assert!(path.ends_with("house/style.mdc"));
 
         let _ = fs::remove_dir_all(&root);
     }

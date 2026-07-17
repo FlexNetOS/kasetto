@@ -25,6 +25,47 @@ pub(crate) struct Config {
     pub mcps: Vec<McpSourceSpec>,
     #[serde(default)]
     pub commands: Vec<CommandSourceSpec>,
+    #[serde(default)]
+    pub instructions: Vec<InstructionSourceSpec>,
+    /// Optional secret-injection settings. Carries no secret *values* (it is
+    /// committed) — only policy and extra credential-file paths.
+    #[serde(default)]
+    pub secrets: Option<SecretsConfig>,
+}
+
+/// `secrets:` config block. Values live in `credentials.yaml` / env, never here.
+#[derive(Debug, Deserialize, Default)]
+pub(crate) struct SecretsConfig {
+    /// What to do when a `${kst_...}` placeholder can't be resolved. Default `error`.
+    #[serde(default)]
+    pub on_missing: Option<OnMissing>,
+    /// Extra credential files (relative to the config dir, or absolute), searched
+    /// after the default `$XDG_CONFIG_HOME/kasetto/credentials.yaml`.
+    #[serde(default)]
+    pub files: Vec<String>,
+    /// KeePass database location for `${kst:kp:...}` refs. Carries no password.
+    #[serde(default)]
+    pub keepass: Option<KeePassConfig>,
+}
+
+/// `secrets.keepass:` block — locates the KeePass database for `${kst:kp:...}`
+/// refs. The master password (if any) comes from `$KST_KEEPASS_PASSWORD` at
+/// runtime, never from this committed file.
+#[derive(Debug, Deserialize, Default)]
+pub(crate) struct KeePassConfig {
+    /// Path to the `.kdbx` database (tilde + config-relative paths allowed).
+    pub database: String,
+    /// Optional key-file used to unlock the database.
+    #[serde(default)]
+    pub key_file: Option<String>,
+}
+
+/// Behavior when a referenced secret can't be resolved.
+#[derive(Debug, Deserialize, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub(crate) enum OnMissing {
+    Error,
+    Warn,
 }
 
 impl Config {
@@ -108,6 +149,48 @@ commands:
         assert!(matches!(&entries[0], CommandEntry::Name(n) if n == "review-pr"));
         assert!(
             matches!(&entries[1], CommandEntry::Obj { name, path: Some(p) } if name == "deploy" && p == "ops")
+        );
+    }
+
+    #[test]
+    fn config_instructions_parses_wildcard() {
+        let yaml = r#"
+skills: []
+instructions:
+  - source: https://github.com/me/rules
+    instructions: "*"
+"#;
+        let cfg: Config = serde_yaml::from_str(yaml).expect("parse");
+        assert_eq!(cfg.instructions.len(), 1);
+        assert!(matches!(
+            cfg.instructions[0].instructions,
+            InstructionsField::Wildcard(_)
+        ));
+    }
+
+    #[test]
+    fn config_instructions_parses_plain_strings_and_objects() {
+        let yaml = r#"
+skills: []
+instructions:
+  - source: https://github.com/me/rules
+    ref: v1.0
+    sub-dir: instructions
+    instructions:
+      - style
+      - name: security
+        path: house
+"#;
+        let cfg: Config = serde_yaml::from_str(yaml).expect("parse");
+        assert_eq!(cfg.instructions[0].git_ref.as_deref(), Some("v1.0"));
+        assert_eq!(cfg.instructions[0].sub_dir.as_deref(), Some("instructions"));
+        let InstructionsField::List(ref entries) = cfg.instructions[0].instructions else {
+            panic!("expected list");
+        };
+        assert_eq!(entries.len(), 2);
+        assert!(matches!(&entries[0], InstructionEntry::Name(n) if n == "style"));
+        assert!(
+            matches!(&entries[1], InstructionEntry::Obj { name, path: Some(p) } if name == "security" && p == "house")
         );
     }
 
@@ -262,6 +345,49 @@ pub(crate) enum CommandsField {
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
 pub(crate) enum CommandEntry {
+    Name(String),
+    Obj { name: String, path: Option<String> },
+}
+
+/// A instructions source: where to fetch from and which instruction files to install.
+#[derive(Debug, Deserialize)]
+pub(crate) struct InstructionSourceSpec {
+    pub source: String,
+    pub branch: Option<String>,
+    #[serde(rename = "ref")]
+    pub git_ref: Option<String>,
+    #[serde(default, rename = "sub-dir", alias = "sub_dir")]
+    pub sub_dir: Option<String>,
+    pub instructions: InstructionsField,
+}
+
+impl InstructionSourceSpec {
+    pub(crate) fn as_source_spec(&self) -> SourceSpec {
+        SourceSpec {
+            source: self.source.clone(),
+            branch: self.branch.clone(),
+            git_ref: self.git_ref.clone(),
+            sub_dir: self.sub_dir.clone(),
+            skills: SkillsField::Wildcard("*".to_string()),
+        }
+    }
+}
+
+/// The `instructions` field on a `InstructionSourceSpec` — mirrors `CommandsField`.
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub(crate) enum InstructionsField {
+    Wildcard(String),
+    List(Vec<InstructionEntry>),
+}
+
+/// One entry in `instructions[].instructions` — mirrors `CommandEntry`.
+///
+/// - Plain string `"style"` → resolves through `discover_instructions` (namespaced names)
+/// - Object `{ name: style, path: house }` → `<path>/style.{md,mdc}`
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub(crate) enum InstructionEntry {
     Name(String),
     Obj { name: String, path: Option<String> },
 }

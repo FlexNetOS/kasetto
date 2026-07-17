@@ -1,3 +1,4 @@
+mod cache;
 mod config;
 mod config_edit;
 mod copy;
@@ -6,6 +7,7 @@ mod hash;
 mod http;
 mod settings;
 
+pub(crate) use cache::{lookup as source_cache_lookup, store as source_cache_store};
 pub(crate) use config::load_config_any;
 pub(crate) use config_edit::{
     insert_item, item_exists, remove_item, remove_names, Pin, RemoveOutcome, Section, Selector,
@@ -216,6 +218,42 @@ pub(crate) fn resolve_command_targets(
     Ok(out)
 }
 
+/// Returns one instructions destination per configured agent (filtering unsupported), deduped.
+pub(crate) fn resolve_instruction_targets(
+    cfg: &Config,
+    scope: Scope,
+    project_root: &Path,
+) -> Result<Vec<crate::model::InstructionTarget>> {
+    let agents = cfg.agents();
+    if agents.is_empty() {
+        return Ok(vec![]);
+    }
+    let mut seen = std::collections::HashSet::<PathBuf>::new();
+    let mut out = Vec::new();
+    match scope {
+        Scope::Project => {
+            for a in agents {
+                if let Some(t) = a.instructions_project_path(project_root) {
+                    if seen.insert(t.path.clone()) {
+                        out.push(t);
+                    }
+                }
+            }
+        }
+        Scope::Global => {
+            let home = dirs_home()?;
+            for a in agents {
+                if let Some(t) = a.instructions_global_path(&home) {
+                    if seen.insert(t.path.clone()) {
+                        out.push(t);
+                    }
+                }
+            }
+        }
+    }
+    Ok(out)
+}
+
 /// Root that lock-file `destination` paths are stored relative to, so the
 /// committed lock stays portable across machines and users.
 /// Project scope → the project root; Global scope → the user's home directory.
@@ -233,6 +271,35 @@ pub(crate) fn relativize_dest(abs: &Path, root: &Path) -> String {
         Ok(rel) => rel.to_string_lossy().to_string(),
         Err(_) => abs.to_string_lossy().to_string(),
     }
+}
+
+/// The lock's `destination` value for a skill installed across multiple agents:
+/// a comma-joined list of `skill_name`'s install dir under every destination,
+/// each relativized to `root`. Recording *all* destinations (not just the
+/// first) is what lets teardown clean every agent dir and lets `doctor` verify
+/// each copy. Both the `sync` and `lock` write paths go through here so they
+/// cannot drift apart (issue #42).
+///
+/// Known limitation — commas in a path corrupt the round-trip. The value is
+/// split on a bare `,` at every read site (no escaping), matching the existing
+/// command/MCP `destination` convention. A literal `,` can enter the stored
+/// string two ways: a skill directory named with a comma, or `relativize_dest`
+/// storing an absolute path (global scope / a custom `destination` outside the
+/// scope root) whose ancestor contains a comma (e.g. a home dir `/Users/a,b/`).
+/// When that happens a stored entry splits into the wrong fragments: in
+/// stale-removal a fragment can resolve to an unrelated `root/<fragment>` and be
+/// removed, while the real dir is skipped. Severity is low — triggering needs a
+/// comma in a path component, which is exotic — and it is pre-existing to the
+/// CSV convention, not introduced here. The escaping-free fix would be to store
+/// destinations as a real list (`Vec<String>`), a lock-schema change
+/// deliberately not taken so skill entries stay consistent with command/MCP
+/// entries.
+pub(crate) fn join_dest_csv(destinations: &[PathBuf], skill_name: &str, root: &Path) -> String {
+    destinations
+        .iter()
+        .map(|d| relativize_dest(&d.join(skill_name), root))
+        .collect::<Vec<_>>()
+        .join(",")
 }
 
 /// Inverse of [`relativize_dest`]: resolve a stored `destination` back to an
@@ -280,6 +347,31 @@ mod tests {
     };
     use std::fs;
     use std::path::Path;
+
+    #[test]
+    fn join_dest_csv_records_every_destination_relative_to_root() {
+        let root = Path::new("/proj");
+        let dests = vec![
+            PathBuf::from("/proj/.claude/skills"),
+            PathBuf::from("/proj/.codex/skills"),
+        ];
+        let csv = join_dest_csv(&dests, "alpha", root);
+        assert_eq!(csv, ".claude/skills/alpha,.codex/skills/alpha");
+        // Each element round-trips back to the absolute install dir.
+        let abs: Vec<PathBuf> = csv.split(',').map(|p| resolve_dest(p, root)).collect();
+        assert_eq!(abs[0], dests[0].join("alpha"));
+        assert_eq!(abs[1], dests[1].join("alpha"));
+    }
+
+    #[test]
+    fn join_dest_csv_keeps_out_of_root_dest_absolute() {
+        let root = Path::new("/proj");
+        let dests = vec![PathBuf::from("/home/user/.claude/skills")];
+        // Outside the scope root → stored verbatim (absolute), still resolvable.
+        let csv = join_dest_csv(&dests, "alpha", root);
+        assert_eq!(csv, "/home/user/.claude/skills/alpha");
+        assert_eq!(resolve_dest(&csv, root), dests[0].join("alpha"));
+    }
 
     #[test]
     fn resolve_path_expands_only_leading_tilde() {

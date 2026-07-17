@@ -14,6 +14,7 @@ pub(crate) enum Section {
     Skills,
     Mcps,
     Commands,
+    Instructions,
 }
 
 impl Section {
@@ -23,6 +24,7 @@ impl Section {
             Section::Skills => "skills",
             Section::Mcps => "mcps",
             Section::Commands => "commands",
+            Section::Instructions => "instructions",
         }
     }
 
@@ -32,6 +34,7 @@ impl Section {
             Section::Skills => "skill",
             Section::Mcps => "mcp",
             Section::Commands => "command",
+            Section::Instructions => "instruction",
         }
     }
 }

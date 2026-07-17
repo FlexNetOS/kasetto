@@ -6,14 +6,19 @@ mod types;
 use std::path::PathBuf;
 
 pub(crate) use agent::{
-    all_command_global_targets, all_command_project_targets, all_mcp_project_targets,
-    all_mcp_settings_targets, command_global_targets, command_project_targets, Agent, AgentField,
+    all_command_global_targets, all_command_project_targets, all_instruction_global_targets,
+    all_instruction_project_targets, all_mcp_project_targets, all_mcp_settings_targets,
+    all_skill_global_targets, all_skill_project_targets, command_global_targets,
+    command_project_targets, instruction_global_targets, instruction_project_targets,
+    mcp_settings_project_targets, mcp_settings_targets, skill_global_targets,
+    skill_project_targets, Agent, AgentField,
 };
 pub(crate) use config::{
-    resolve_scope, CommandEntry, CommandsField, Config, GitPin, McpEntry, McpsField, Scope,
-    SkillTarget, SkillsField, SourceSpec,
+    resolve_scope, CommandEntry, CommandsField, Config, GitPin, InstructionEntry,
+    InstructionsField, McpEntry, McpsField, Scope, SkillTarget, SkillsField, SourceSpec,
 };
-pub(crate) use config::{CommandSourceSpec, McpSourceSpec};
+pub(crate) use config::{CommandSourceSpec, InstructionSourceSpec, McpSourceSpec};
+pub(crate) use config::{OnMissing, SecretsConfig};
 pub(crate) use types::{
     Action, InstalledSkill, Report, SkillEntry, State, Summary, SyncFailure, LOCK_VERSION,
 };
@@ -58,4 +63,34 @@ pub(crate) enum CommandFormat {
 pub(crate) struct CommandTarget {
     pub path: PathBuf,
     pub format: CommandFormat,
+}
+
+/// On-disk shape Kasetto emits for an instruction on a given agent.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub(crate) enum InstructionFormat {
+    /// Plain Markdown body merged into a single shared file (`CLAUDE.md`,
+    /// `AGENTS.md`, `GEMINI.md`, `.github/copilot-instructions.md`, ...) via
+    /// managed comment-block markers so multiple instructions and hand edits coexist.
+    AggregateMarkdown,
+    /// `<name>.mdc` per instruction — Cursor MDC frontmatter (`description`, `globs`,
+    /// `alwaysApply`) reconstructed from the source, then the body.
+    CursorMdc,
+    /// `<name>.md` per instruction — Markdown body only, frontmatter stripped.
+    PlainMarkdownDir,
+}
+
+impl InstructionFormat {
+    /// Whether the target is a single shared file that instructions merge into (as
+    /// opposed to a directory holding one file per instruction).
+    pub(crate) fn is_aggregate(self) -> bool {
+        matches!(self, InstructionFormat::AggregateMarkdown)
+    }
+}
+
+/// Destination (shared file or per-instruction directory) and write format for instruction
+/// sync / clean. `path` is a file when `format.is_aggregate()`, else a directory.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct InstructionTarget {
+    pub path: PathBuf,
+    pub format: InstructionFormat,
 }

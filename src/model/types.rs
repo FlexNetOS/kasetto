@@ -3,14 +3,17 @@ use std::collections::BTreeMap;
 
 use super::Scope;
 
-/// Schema version of `kasetto.lock`. Bumped to 2 for the portable format:
-/// relative `destination` paths and no machine-/run-specific fields.
-pub(crate) const LOCK_VERSION: u8 = 2;
+/// Schema version of `kasetto.lock`. Bumped to 2 for the portable format
+/// (relative `destination` paths, no machine-/run-specific fields), then to 3
+/// when the `instructions` asset kind joined skills/commands/MCPs.
+pub(crate) const LOCK_VERSION: u8 = 3;
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub(crate) struct SkillEntry {
-    /// Install path relative to the scope root (portable across machines);
-    /// legacy locks may store an absolute path here, which is still honored.
+    /// Install path(s) relative to the scope root (portable across machines),
+    /// comma-joined when more than one agent is configured so every agent dir
+    /// the skill was written to is tracked. Legacy locks may store a single
+    /// absolute path here, which is still honored.
     pub destination: String,
     pub hash: String,
     pub skill: String,

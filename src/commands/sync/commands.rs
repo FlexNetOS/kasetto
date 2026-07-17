@@ -122,10 +122,11 @@ pub(super) fn sync_commands(
                 continue;
             }
         };
-        let root = materialized
-            .cleanup_dir
-            .as_deref()
-            .unwrap_or(&materialized.source_root);
+        // Resolve commands against `source_root`, which honors `sub-dir` for
+        // local, staged-remote, and cache-served sources alike. `cleanup_dir` is
+        // the archive root (no sub-dir applied) and a teardown-only handle — using
+        // it as the root would miss commands under a `sub-dir`.
+        let root = materialized.source_root.as_path();
 
         let selected: Vec<(String, PathBuf)> = match &src.commands {
             CommandsField::Wildcard(s) if s == "*" => match discover_commands(root) {
@@ -412,6 +413,7 @@ fn apply_pending(
                         source: p.source.clone(),
                         destination: dest_csv,
                         source_revision: p.source_revision.clone(),
+                        has_secrets: false,
                     },
                 );
             }
@@ -532,6 +534,8 @@ mod tests {
                 sub_dir: None,
                 commands: CommandsField::Wildcard("*".to_string()),
             }],
+            instructions: Vec::new(),
+            secrets: None,
         };
 
         let mut lock = LockFile::default();
@@ -552,6 +556,7 @@ mod tests {
             update: false,
             update_only: Vec::new(),
             locked: false,
+            secrets: crate::secrets::SecretContext::empty(),
         };
 
         sync_commands(&ctx, &mut lock, &mut summary, &mut actions).unwrap();
@@ -582,6 +587,8 @@ mod tests {
                 skills: Vec::new(),
                 mcps: Vec::new(),
                 commands: Vec::new(),
+                instructions: Vec::new(),
+                secrets: None,
             }
         };
         let mut summary2 = Summary::default();
@@ -600,6 +607,7 @@ mod tests {
             update: false,
             update_only: Vec::new(),
             locked: false,
+            secrets: crate::secrets::SecretContext::empty(),
         };
         // `sync_commands` now invokes `remove_stale` itself when `cfg.commands` is
         // empty — call it directly here to keep this a focused unit test of the
@@ -638,6 +646,7 @@ mod tests {
             update: false,
             update_only: Vec::new(),
             locked,
+            secrets: crate::secrets::SecretContext::empty(),
         }
     }
 
@@ -655,6 +664,8 @@ mod tests {
                 sub_dir: None,
                 commands,
             }],
+            instructions: Vec::new(),
+            secrets: None,
         }
     }
 

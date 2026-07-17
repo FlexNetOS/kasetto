@@ -35,8 +35,8 @@ pub(crate) fn run(
 
     let project_root = std::env::current_dir().unwrap_or_default();
     let merged = scope_override.is_none();
-    let (mut skills, mut mcps, mut commands) =
-        load_skills_mcps_commands(scope_override, &project_root)?;
+    let (mut skills, mut mcps, mut commands, mut instructions) =
+        load_installed_assets(scope_override, &project_root)?;
 
     if !matches!(kind, ListKind::All | ListKind::Skills) {
         skills.clear();
@@ -47,18 +47,23 @@ pub(crate) fn run(
     if !matches!(kind, ListKind::All | ListKind::Commands) {
         commands.clear();
     }
+    if !matches!(kind, ListKind::All | ListKind::Instructions) {
+        instructions.clear();
+    }
 
     if as_json {
         let output = serde_json::json!({
             "skills": skills,
             "mcps": mcps,
             "commands": commands,
+            "instructions": instructions,
             "merged_scopes": merged,
         });
         return print_json(&output);
     }
 
-    let has_anything = !skills.is_empty() || !mcps.is_empty() || !commands.is_empty();
+    let has_anything =
+        !skills.is_empty() || !mcps.is_empty() || !commands.is_empty() || !instructions.is_empty();
     if !has_anything {
         println!("Nothing installed.");
         print_tip(
@@ -72,6 +77,7 @@ pub(crate) fn run(
     print_skills_tree(&skills, plain);
     print_assets_tree("MCP Servers", "connected", &mcps, plain);
     print_assets_tree("Commands", "available", &commands, plain);
+    print_assets_tree("Instructions", "active", &instructions, plain);
 
     Ok(())
 }
@@ -130,10 +136,17 @@ fn print_assets_tree(label: &str, unit: &str, rows: &[AssetEntry], plain: bool) 
     }
 }
 
-fn load_skills_mcps_commands(
+type InstalledAssets = (
+    Vec<InstalledSkill>,
+    Vec<AssetEntry>,
+    Vec<AssetEntry>,
+    Vec<AssetEntry>,
+);
+
+fn load_installed_assets(
     scope_override: Option<Scope>,
     project_root: &std::path::Path,
-) -> Result<(Vec<InstalledSkill>, Vec<AssetEntry>, Vec<AssetEntry>)> {
+) -> Result<InstalledAssets> {
     if let Some(s) = scope_override {
         let scope = resolve_scope(Some(s), None);
         let lock = load_lock(scope, project_root)?;
@@ -141,7 +154,8 @@ fn load_skills_mcps_commands(
         return Ok((
             installed_skills_from_lock(&lock, &runtime, scope, project_root, false),
             mcp_asset_entries(&lock, scope),
-            command_asset_entries(&lock, scope),
+            kind_asset_entries(&lock, scope, "command"),
+            kind_asset_entries(&lock, scope, "instructions"),
         ));
     }
     let global_lock = load_lock(Scope::Global, project_root)?;
@@ -166,17 +180,24 @@ fn load_skills_mcps_commands(
     let mut mcps = mcp_asset_entries(&global_lock, Scope::Global);
     mcps.extend(mcp_asset_entries(&project_lock, Scope::Project));
     mcps.sort_by_cached_key(|m| (m.name.to_lowercase(), scope_ord(m.scope)));
-    let mut commands = command_asset_entries(&global_lock, Scope::Global);
-    commands.extend(command_asset_entries(&project_lock, Scope::Project));
+    let mut commands = kind_asset_entries(&global_lock, Scope::Global, "command");
+    commands.extend(kind_asset_entries(&project_lock, Scope::Project, "command"));
     commands.sort_by_cached_key(|m| (m.name.to_lowercase(), scope_ord(m.scope)));
-    Ok((skills, mcps, commands))
+    let mut instructions = kind_asset_entries(&global_lock, Scope::Global, "instructions");
+    instructions.extend(kind_asset_entries(
+        &project_lock,
+        Scope::Project,
+        "instructions",
+    ));
+    instructions.sort_by_cached_key(|m| (m.name.to_lowercase(), scope_ord(m.scope)));
+    Ok((skills, mcps, commands, instructions))
 }
 
-fn command_asset_entries(lock: &LockFile, scope: Scope) -> Vec<AssetEntry> {
+fn kind_asset_entries(lock: &LockFile, scope: Scope, kind: &str) -> Vec<AssetEntry> {
     let mut out: Vec<AssetEntry> = lock
         .assets
         .iter()
-        .filter(|(_, a)| a.kind == "command")
+        .filter(|(_, a)| a.kind == kind)
         .map(|(_, a)| AssetEntry {
             name: a.name.clone(),
             scope,
@@ -242,7 +263,14 @@ fn installed_skills_from_lock(
     let root = scope_root(lock_scope, project_root).unwrap_or_else(|_| project_root.to_path_buf());
     let mut skills = Vec::new();
     for (id, entry) in &state.skills {
-        let abs_dest = resolve_dest(&entry.destination, &root);
+        // `destination` may list several agent dirs (one per configured agent);
+        // the first is enough to read the skill profile for display.
+        let first_dest = entry
+            .destination
+            .split(',')
+            .find(|s| !s.is_empty())
+            .unwrap_or(&entry.destination);
+        let abs_dest = resolve_dest(first_dest, &root);
         let abs_dest_str = abs_dest.to_string_lossy().to_string();
         let (name, fallback_description) = read_skill_profile(&abs_dest_str, &entry.skill);
         let description = if entry.description.trim().is_empty() {

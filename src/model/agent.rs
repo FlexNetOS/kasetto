@@ -1,7 +1,10 @@
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
-use super::{CommandFormat, CommandTarget, McpSettingsFormat, McpSettingsTarget};
+use super::{
+    CommandFormat, CommandTarget, InstructionFormat, InstructionTarget, McpSettingsFormat,
+    McpSettingsTarget,
+};
 
 #[derive(Debug, Deserialize, Clone, PartialEq, Eq)]
 #[serde(untagged)]
@@ -102,21 +105,21 @@ pub(crate) fn all_mcp_project_targets(project_root: &Path) -> Vec<McpSettingsTar
     )
 }
 
-fn dedup_targets(iter: impl Iterator<Item = McpSettingsTarget>) -> Vec<McpSettingsTarget> {
+/// Deduplicate `iter` by the `Path` each item maps to via `key`, returning the
+/// survivors sorted by that path (first occurrence wins).
+fn dedup_by_path<T>(iter: impl Iterator<Item = T>, key: impl Fn(&T) -> &Path) -> Vec<T> {
     let mut seen = std::collections::HashSet::<PathBuf>::new();
-    let mut out: Vec<McpSettingsTarget> = iter.filter(|t| seen.insert(t.path.clone())).collect();
-    out.sort_by(|x, y| x.path.cmp(&y.path));
+    let mut out: Vec<T> = iter.filter(|t| seen.insert(key(t).to_path_buf())).collect();
+    out.sort_by(|x, y| key(x).cmp(key(y)));
     out
 }
 
+fn dedup_targets(iter: impl Iterator<Item = McpSettingsTarget>) -> Vec<McpSettingsTarget> {
+    dedup_by_path(iter, |t| t.path.as_path())
+}
+
 fn dedup_command_targets(iter: impl Iterator<Item = Option<CommandTarget>>) -> Vec<CommandTarget> {
-    let mut seen = std::collections::HashSet::<PathBuf>::new();
-    let mut out: Vec<CommandTarget> = iter
-        .flatten()
-        .filter(|t| seen.insert(t.path.clone()))
-        .collect();
-    out.sort_by(|x, y| x.path.cmp(&y.path));
-    out
+    dedup_by_path(iter.flatten(), |t| t.path.as_path())
 }
 
 /// Deduped global command directories for every known agent.
@@ -144,9 +147,101 @@ pub(crate) fn command_project_targets(project_root: &Path, agents: &[Agent]) -> 
     dedup_command_targets(agents.iter().map(|a| a.commands_project_path(project_root)))
 }
 
+fn dedup_paths(iter: impl Iterator<Item = PathBuf>) -> Vec<PathBuf> {
+    dedup_by_path(iter, |p| p.as_path())
+}
+
+fn dedup_instruction_targets(
+    iter: impl Iterator<Item = Option<InstructionTarget>>,
+) -> Vec<InstructionTarget> {
+    dedup_by_path(iter.flatten(), |t| t.path.as_path())
+}
+
+/// Deduped skill install directories for a specific set of agents — `doctor`
+/// scans these for untracked skills.
+pub(crate) fn skill_global_targets(home: &Path, agents: &[Agent]) -> Vec<PathBuf> {
+    dedup_paths(agents.iter().map(|a| a.global_path(home)))
+}
+
+/// Deduped project-level skill install directories for a specific set of agents.
+pub(crate) fn skill_project_targets(project_root: &Path, agents: &[Agent]) -> Vec<PathBuf> {
+    dedup_paths(agents.iter().map(|a| a.project_path(project_root)))
+}
+
+/// Deduped global skill directories for every known agent.
+pub(crate) fn all_skill_global_targets(home: &Path) -> Vec<PathBuf> {
+    dedup_paths(AGENT_PRESETS.iter().map(|a| a.global_path(home)))
+}
+
+/// Deduped project-level skill directories for every known agent.
+pub(crate) fn all_skill_project_targets(project_root: &Path) -> Vec<PathBuf> {
+    dedup_paths(AGENT_PRESETS.iter().map(|a| a.project_path(project_root)))
+}
+
+/// Deduped global instruction targets (aggregate files + per-instruction dirs)
+/// for a specific set of agents.
+pub(crate) fn instruction_global_targets(home: &Path, agents: &[Agent]) -> Vec<InstructionTarget> {
+    dedup_instruction_targets(agents.iter().map(|a| a.instructions_global_path(home)))
+}
+
+/// Deduped project-level instruction targets for a specific set of agents.
+pub(crate) fn instruction_project_targets(
+    project_root: &Path,
+    agents: &[Agent],
+) -> Vec<InstructionTarget> {
+    dedup_instruction_targets(
+        agents
+            .iter()
+            .map(|a| a.instructions_project_path(project_root)),
+    )
+}
+
+/// Deduped global instruction targets for every known agent.
+pub(crate) fn all_instruction_global_targets(home: &Path) -> Vec<InstructionTarget> {
+    dedup_instruction_targets(
+        AGENT_PRESETS
+            .iter()
+            .map(|a| a.instructions_global_path(home)),
+    )
+}
+
+/// Deduped project-level instruction targets for every known agent.
+pub(crate) fn all_instruction_project_targets(project_root: &Path) -> Vec<InstructionTarget> {
+    dedup_instruction_targets(
+        AGENT_PRESETS
+            .iter()
+            .map(|a| a.instructions_project_path(project_root)),
+    )
+}
+
+/// Deduped global MCP settings files for a specific set of agents.
+pub(crate) fn mcp_settings_targets(home: &Path, agents: &[Agent]) -> Vec<McpSettingsTarget> {
+    dedup_targets(
+        agents
+            .iter()
+            .map(|a| a.mcp_settings_target(home, Path::new(""))),
+    )
+}
+
+/// Deduped project-level MCP settings files for a specific set of agents.
+pub(crate) fn mcp_settings_project_targets(
+    project_root: &Path,
+    agents: &[Agent],
+) -> Vec<McpSettingsTarget> {
+    dedup_targets(agents.iter().map(|a| a.mcp_project_target(project_root)))
+}
+
 #[inline]
 fn cmd(base: &Path, rel: &str, format: CommandFormat) -> Option<CommandTarget> {
     Some(CommandTarget {
+        path: base.join(rel),
+        format,
+    })
+}
+
+#[inline]
+fn instruction(base: &Path, rel: &str, format: InstructionFormat) -> Option<InstructionTarget> {
+    Some(InstructionTarget {
         path: base.join(rel),
         format,
     })
@@ -413,6 +508,86 @@ impl Agent {
             | Agent::Warp => None,
         }
     }
+
+    /// Project-local instructions destination and write format for this agent.
+    ///
+    /// Project paths are verified against each agent's official docs (early
+    /// 2026). Aggregate formats are single shared instruction files; dir formats
+    /// hold one file per instruction. `OpenClaw` has no project-scoped instructions concept
+    /// (its `AGENTS.md` lives in the machine-level workspace — see
+    /// `instructions_global_path`).
+    pub(crate) fn instructions_project_path(
+        self,
+        project_root: &Path,
+    ) -> Option<InstructionTarget> {
+        use InstructionFormat::{AggregateMarkdown as Agg, CursorMdc, PlainMarkdownDir as Dir};
+        match self {
+            // Aggregate single-file instruction files.
+            Agent::ClaudeCode => instruction(project_root, "CLAUDE.md", Agg),
+            Agent::Codex => instruction(project_root, "AGENTS.md", Agg),
+            Agent::OpenCode => instruction(project_root, "AGENTS.md", Agg),
+            Agent::Amp => instruction(project_root, "AGENTS.md", Agg),
+            // Antigravity's native file is GEMINI.md (takes precedence over AGENTS.md).
+            Agent::Antigravity => instruction(project_root, "GEMINI.md", Agg),
+            Agent::GeminiCli => instruction(project_root, "GEMINI.md", Agg),
+            Agent::GithubCopilot => {
+                instruction(project_root, ".github/copilot-instructions.md", Agg)
+            }
+            // Junie's current primary file is .junie/AGENTS.md (.junie/guidelines.md is legacy).
+            Agent::Junie => instruction(project_root, ".junie/AGENTS.md", Agg),
+            Agent::Goose => instruction(project_root, ".goosehints", Agg),
+            Agent::Warp => instruction(project_root, "WARP.md", Agg),
+            // Replit Agent reads replit.md, not AGENTS.md.
+            Agent::Replit => instruction(project_root, "replit.md", Agg),
+            // OpenHands' always-on repo instructions live in this single file.
+            Agent::OpenHands => instruction(project_root, ".openhands/microagents/repo.md", Agg),
+            // Cursor MDC: per-instruction files with reconstructed frontmatter.
+            Agent::Cursor => instruction(project_root, ".cursor/rules", CursorMdc),
+            // Per-instruction plain-markdown directories.
+            Agent::Windsurf => instruction(project_root, ".windsurf/rules", Dir),
+            Agent::Cline => instruction(project_root, ".clinerules", Dir),
+            Agent::Continue => instruction(project_root, ".continue/rules", Dir),
+            Agent::Roo => instruction(project_root, ".roo/rules", Dir),
+            Agent::Augment => instruction(project_root, ".augment/rules", Dir),
+            Agent::KiroCli => instruction(project_root, ".kiro/steering", Dir),
+            Agent::Trae => instruction(project_root, ".trae/rules", Dir),
+            // OpenClaw has no per-project instructions file (workspace-level only).
+            Agent::OpenClaw => None,
+        }
+    }
+
+    /// Global / user-level instructions destination for this agent.
+    ///
+    /// Most are documented official paths; a few are community-reported and not
+    /// yet in official docs (notably Cursor `~/.cursor/rules`, Cline
+    /// `~/Documents/Cline/Rules`) — harmless where a given build ignores them.
+    /// Returns `None` for agents whose global instructions are UI-managed (Warp, Trae)
+    /// or have no documented on-disk location (Continue, OpenHands, Replit).
+    pub(crate) fn instructions_global_path(self, home: &Path) -> Option<InstructionTarget> {
+        use InstructionFormat::{AggregateMarkdown as Agg, CursorMdc, PlainMarkdownDir as Dir};
+        match self {
+            Agent::ClaudeCode => instruction(home, ".claude/CLAUDE.md", Agg),
+            Agent::Codex => instruction(home, ".codex/AGENTS.md", Agg),
+            Agent::GeminiCli => instruction(home, ".gemini/GEMINI.md", Agg),
+            Agent::Antigravity => instruction(home, ".gemini/GEMINI.md", Agg),
+            Agent::Junie => instruction(home, ".junie/AGENTS.md", Agg),
+            Agent::OpenCode => instruction(home, ".config/opencode/AGENTS.md", Agg),
+            Agent::Amp => instruction(home, ".config/amp/AGENTS.md", Agg),
+            Agent::Goose => instruction(home, ".config/goose/.goosehints", Agg),
+            Agent::GithubCopilot => instruction(home, ".copilot/copilot-instructions.md", Agg),
+            Agent::OpenClaw => instruction(home, ".openclaw/workspace/AGENTS.md", Agg),
+            Agent::Windsurf => instruction(home, ".codeium/windsurf/memories/global_rules.md", Agg),
+            Agent::KiroCli => instruction(home, ".kiro/steering", Dir),
+            Agent::Augment => instruction(home, ".augment/rules", Dir),
+            Agent::Roo => instruction(home, ".roo/rules", Dir),
+            Agent::Cline => instruction(home, "Documents/Cline/Rules", Dir),
+            // Community-supported (not yet in official docs): global ~/.cursor/rules
+            // is read as .mdc by recent Cursor builds; harmless where it isn't.
+            Agent::Cursor => instruction(home, ".cursor/rules", CursorMdc),
+            // UI-managed or no documented on-disk global instructions.
+            Agent::Warp | Agent::Trae | Agent::Continue | Agent::OpenHands | Agent::Replit => None,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -461,9 +636,122 @@ mod tests {
     }
 
     #[test]
+    fn instructions_project_path_known_agents() {
+        let pr = Path::new("/work");
+        assert_eq!(
+            Agent::ClaudeCode
+                .instructions_project_path(pr)
+                .unwrap()
+                .path,
+            pr.join("CLAUDE.md")
+        );
+        assert!(Agent::ClaudeCode
+            .instructions_project_path(pr)
+            .unwrap()
+            .format
+            .is_aggregate());
+        assert_eq!(
+            Agent::Cursor.instructions_project_path(pr).unwrap().format,
+            InstructionFormat::CursorMdc
+        );
+        assert_eq!(
+            Agent::Windsurf
+                .instructions_project_path(pr)
+                .unwrap()
+                .format,
+            InstructionFormat::PlainMarkdownDir
+        );
+        assert_eq!(
+            Agent::Codex.instructions_project_path(pr).unwrap().path,
+            pr.join("AGENTS.md")
+        );
+        // Doc-verified corrections.
+        assert_eq!(
+            Agent::Replit.instructions_project_path(pr).unwrap().path,
+            pr.join("replit.md")
+        );
+        assert_eq!(
+            Agent::Antigravity
+                .instructions_project_path(pr)
+                .unwrap()
+                .path,
+            pr.join("GEMINI.md")
+        );
+        assert_eq!(
+            Agent::OpenHands.instructions_project_path(pr).unwrap().path,
+            pr.join(".openhands/microagents/repo.md")
+        );
+        assert_eq!(
+            Agent::Junie.instructions_project_path(pr).unwrap().path,
+            pr.join(".junie/AGENTS.md")
+        );
+        // OpenClaw has no per-project instructions concept.
+        assert!(Agent::OpenClaw.instructions_project_path(pr).is_none());
+        // Every other preset resolves to a project instructions target.
+        for a in AGENT_PRESETS.iter().filter(|a| **a != Agent::OpenClaw) {
+            assert!(
+                a.instructions_project_path(pr).is_some(),
+                "{a:?} missing project instructions"
+            );
+        }
+    }
+
+    #[test]
+    fn instructions_global_path_for_agents_with_global_location() {
+        let home = Path::new("/tmp/home");
+        assert_eq!(
+            Agent::ClaudeCode
+                .instructions_global_path(home)
+                .unwrap()
+                .path,
+            home.join(".claude/CLAUDE.md")
+        );
+        assert_eq!(
+            Agent::Junie.instructions_global_path(home).unwrap().path,
+            home.join(".junie/AGENTS.md")
+        );
+        assert_eq!(
+            Agent::OpenClaw.instructions_global_path(home).unwrap().path,
+            home.join(".openclaw/workspace/AGENTS.md")
+        );
+        // Cursor global ~/.cursor/rules (community-supported .mdc dir).
+        let cursor = Agent::Cursor.instructions_global_path(home).unwrap();
+        assert_eq!(cursor.path, home.join(".cursor/rules"));
+        assert_eq!(cursor.format, InstructionFormat::CursorMdc);
+        // Warp / Trae globals are UI-managed → no syncable file.
+        assert!(Agent::Warp.instructions_global_path(home).is_none());
+        assert!(Agent::Trae.instructions_global_path(home).is_none());
+    }
+
+    #[test]
     fn all_command_global_targets_dedupes_and_sorts() {
         let home = Path::new("/tmp/home");
         let all = all_command_global_targets(home);
+        assert!(!all.is_empty());
+        for w in all.windows(2) {
+            assert!(w[0].path <= w[1].path);
+        }
+    }
+
+    #[test]
+    fn all_skill_project_targets_dedupes_and_sorts() {
+        let pr = Path::new("/work");
+        let all = all_skill_project_targets(pr);
+        assert!(!all.is_empty());
+        // Amp/Cline/Warp/Replit all map to .agents/skills — must collapse to one.
+        assert_eq!(
+            all.iter().filter(|p| p.ends_with(".agents/skills")).count(),
+            1
+        );
+        for w in all.windows(2) {
+            assert!(w[0] <= w[1]);
+        }
+    }
+
+    #[test]
+    fn all_instruction_global_targets_dedupes_and_sorts() {
+        let home = Path::new("/tmp/home");
+        let all = all_instruction_global_targets(home);
         assert!(!all.is_empty());
         for w in all.windows(2) {
             assert!(w[0].path <= w[1].path);

@@ -2,6 +2,121 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.5.0] - 2026-06-28
+
+### Bug fixes
+
+- **deps**: Bump quinn-proto to 0.11.15 for RUSTSEC-2026-0185
+- **lock**: Record every skill destination in the lock rebuild
+- **sync**: Track every skill destination to stop multi-agent data loss
+- **secrets**: Scope --update rotation per file, not per source
+
+### Documentation
+
+- **readme**: List secret managers and broaden positioning
+- **lock**: Note the comma-in-path limitation of the destination CSV
+- **secrets**: Drop stale provider count in tagged-form intro
+- **site**: Tighten feature-tab copy
+- **secrets**: Document #json-key for gcp and az
+- **secrets**: Document aws, gcp, az, pass, and keychain sources
+- **secrets**: Flag that rotation requires --update
+- **secrets**: Document the KeePass (kp) secret source
+- **secrets**: Lowercase ${kst_…} grammar and env/crd source tags
+- **secrets**: Document op and vault external secret managers
+- **secrets**: Document ${KST_…} secret injection across README and site
+
+### Features
+
+- **doctor**: Report untracked entries in managed install paths
+- **secrets**: Support #json-key extraction for gcp and az
+- **site**: Add secret-sources cards to the homepage
+- **secrets**: Add aws, gcp, az, pass, and keychain sources
+- **secrets**: Harden injection per design review
+- **secrets**: Resolve ${kst:kp:…} via the KeePassXC CLI
+- **secrets**: Lowercase sentinel and explicit env/crd source tags
+- **secrets**: Resolve ${KST:op:…} and ${KST:vault:…} via the op/vault CLIs
+- **secrets**: Inject ${KST_…} placeholders into MCP configs at sync time
+
+### Refactor
+
+- Dedup path-set helpers and share MCP JSON object parsing
+- **secrets**: Derive vault_path_field from split_field
+- **site**: Drop the secret-cards header bar
+- **site**: Drop redundant CLI label from secret cards, move above example
+- **sync**: Extract classify_mcp_file from sync_mcps
+- **sync**: Bundle per-skill install args into SkillJob
+
+### Style
+
+- Normalize unicode ellipsis to ASCII ... across docs, comments, and CLI help
+- Collapse single-line use import in sync/skills
+
+## [3.4.0] - 2026-06-21
+
+### Bug fixes
+
+- **commands**: Resolve commands from source_root, not cleanup_dir
+- **cache**: Fall back to direct extract when the cache dir is unwritable
+- **mcps**: Resolve MCP files from source_root, not cleanup_dir
+
+### Documentation
+
+- Correct inaccuracies found in a full docs audit
+- Document source cache, sparse extraction, parallel fetch
+
+### Features
+
+- **site**: Add security headers, Analytics and Speed Insights
+
+### Bench
+
+- Add hyperfine cold-sync benchmark
+
+### Perf
+
+- Sparse-extract sub-dir sources and stream archive bodies
+- Download source archives in parallel during skill sync
+- Cache extracted source trees for immutable refs
+
+### Release
+
+- V3.4.0
+
+## [3.3.1] - 2026-06-18
+
+### Bug fixes
+
+- **instructions**: Honor sub-dir, prune targetless reconfig, normalize extension names
+
+### Release
+
+- V3.3.1
+
+## [3.3.0] - 2026-06-18
+
+### Bug fixes
+
+- **site**: Align demo status column for longer instruction slugs
+- **site**: Override js-yaml and dompurify to patch transitive vulns
+
+### Documentation
+
+- Document instructions as a first-class asset kind
+- Showcase instructions in readme demo and hero terminal
+- Use brew tap/trust/install for Homebrew instructions
+
+### Features
+
+- **rules**: Distribute agent rules across all agents
+
+### Refactor
+
+- Rename rules asset kind to instructions
+
+### Release
+
+- V3.3.0
+
 ## [3.2.0] - 2026-06-12
 
 ### Bug fixes
@@ -349,6 +464,7 @@ All notable changes to this project will be documented in this file.
 
 ### Release
 
+- V3.2.0
 - V3.1.0
 - V3.0.0
 - V2.12.0
